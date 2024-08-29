@@ -29,3 +29,4 @@ $string['pluginname'] = 'Moodle Chat Bot';
 $string['modulename'] = 'Moodle Chat Bot';
 $string['pluginadministration'] = 'Moodle Chat Bot Administration';
 $string['modulenameplural'] = 'Moodle Chat Bots';
+$string['moodlechatbotname'] = 'Moodle Chat Bot';
