@@ -30,3 +30,5 @@ $string['modulename'] = 'Moodle Chat Bot';
 $string['pluginadministration'] = 'Moodle Chat Bot Administration';
 $string['modulenameplural'] = 'Moodle Chat Bots';
 $string['moodlechatbotname'] = 'Moodle Chat Bot';
+$string['moodlechatbotsettings'] = 'Moodle Chat Bot Settings';
+$string['moodlechatbotfieldset'] = 'Moodle Chat Bot Field Set';
