@@ -27,3 +27,4 @@ defined('MOODLE_INTERNAL') || die();
 
 $string['pluginname'] = 'Moodle Chat Bot';
 $string['modulename'] = 'Moodle Chat Bot';
+$string['pluginadministration'] = 'Moodle Chat Bot Administration';
