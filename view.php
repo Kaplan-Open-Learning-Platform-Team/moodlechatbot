@@ -60,4 +60,12 @@ $PAGE->set_context($modulecontext);
 
 echo $OUTPUT->header();
 
+echo html_writer::start_tag('div', array('id' => 'moodlechatbot-container'));
+echo html_writer::tag('div', '', array('id' => 'moodlechatbot-messages'));
+echo html_writer::start_tag('div', array('id' => 'moodlechatbot-input'));
+echo html_writer::tag('textarea', '', array('id' => 'moodlechatbot-textarea', 'placeholder' => 'Type your message here...'));
+echo html_writer::tag('button', 'Send', array('id' => 'moodlechatbot-send'));
+echo html_writer::end_tag('div');
+echo html_writer::end_tag('div');
+
 echo $OUTPUT->footer();
