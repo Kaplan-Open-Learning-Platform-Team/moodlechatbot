@@ -1,4 +1,4 @@
-# Moodle Chat Bot #
+# Moodle Chat Bot Ollama Branch #
 
 TODO Describe the plugin shortly here.
 
