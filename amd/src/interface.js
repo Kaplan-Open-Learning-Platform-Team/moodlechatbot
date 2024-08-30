@@ -3,7 +3,11 @@ define(['jquery'], function($) {
     /* eslint-disable no-console */
     console.log('Moodle chatbot module loaded');
     return {
-        // Initialize the chatbot functionality
+        /**
+         * Initializes the chatbot functionality.
+         * 
+         * Sets up event listeners and initializes the chat interface.
+         */
         init: function() {
             console.log('Initializing chatbot');
             const messageContainer = $('#moodlechatbot-messages');
@@ -40,7 +44,12 @@ define(['jquery'], function($) {
                     });
             });
 
-            // Function to display a message in the chat interface
+            /**
+             * Displays a message in the chat interface.
+             * 
+             * @param {string} message - The message to display.
+             * @param {string} sender - The sender of the message ('user' or 'bot').
+             */
             function displayMessage(message, sender) {
                 console.log(`Displaying ${sender} message:`, message);
                 const messageElement = $('<div>').addClass('message ' + sender).text(message);
@@ -49,7 +58,13 @@ define(['jquery'], function($) {
                 messageContainer.scrollTop(messageContainer.prop('scrollHeight'));
             }
 
-            // Function to send a message to the Ollama API and return the response
+            /**
+             * Sends a message to the Ollama API and returns the response.
+             * 
+             * @param {string} message - The message to send to Ollama.
+             * @returns {Promise<string>} - A promise that resolves with the Ollama response.
+             * @throws {Error} - If there is an error communicating with the Ollama API.
+             */
             async function sendMessageToOllama(message) {
                 console.log('Sending message to Ollama:', message);
                 try {
