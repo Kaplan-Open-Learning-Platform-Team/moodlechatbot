@@ -18,9 +18,11 @@
  * Library of interface functions and constants.
  *
  * @package     mod_moodlechatbot
- * @copyright   2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
+ * @copyright   2024 Your Name <your@email.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Return if the plugin supports $feature.
