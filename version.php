@@ -18,7 +18,7 @@
  * Plugin version and other meta-data are defined here.
  *
  * @package     mod_moodlechatbot
- * @copyright   2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
+ * @copyright   2024 Your Name <your@email.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_moodlechatbot';
 $plugin->release = '0.1.0';
-$plugin->version = 2024082900;
+$plugin->version = 2024083000;
 $plugin->requires = 2022112800;
 $plugin->maturity = MATURITY_ALPHA;
