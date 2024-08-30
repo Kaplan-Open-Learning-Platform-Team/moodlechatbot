@@ -1,5 +1,6 @@
 // Define the module using AMD (Asynchronous Module Definition)
 define(['jquery'], function($) {
+    /* eslint-disable no-console */
     console.log('Moodle chatbot module loaded');
     return {
         // Initialize the chatbot functionality
@@ -81,4 +82,5 @@ define(['jquery'], function($) {
             console.log('Chatbot initialization complete');
         }
     };
+    /* eslint-enable no-console */
 });
