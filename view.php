@@ -18,7 +18,7 @@
  * Prints an instance of mod_moodlechatbot.
  *
  * @package     mod_moodlechatbot
- * @copyright   2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
+ * @copyright   2024 Your Name <your@email.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -45,13 +45,13 @@ require_login($course, true, $cm);
 
 $modulecontext = context_module::instance($cm->id);
 
-#$event = \mod_moodlechatbot\event\course_module_viewed::create(array(
-#    'objectid' => $moduleinstance->id,
-#    'context' => $modulecontext
-##));
-#$event->add_record_snapshot('course', $course);
-#$event->add_record_snapshot('moodlechatbot', $moduleinstance);
-#$event->trigger();
+$event = \mod_moodlechatbot\event\course_module_viewed::create(array(
+    'objectid' => $moduleinstance->id,
+    'context' => $modulecontext
+));
+$event->add_record_snapshot('course', $course);
+$event->add_record_snapshot('moodlechatbot', $moduleinstance);
+$event->trigger();
 
 $PAGE->set_url('/mod/moodlechatbot/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($moduleinstance->name));
@@ -60,12 +60,16 @@ $PAGE->set_context($modulecontext);
 
 echo $OUTPUT->header();
 
-echo html_writer::start_tag('div', array('id' => 'moodlechatbot-container'));
-echo html_writer::tag('div', '', array('id' => 'moodlechatbot-messages'));
-echo html_writer::start_tag('div', array('id' => 'moodlechatbot-input'));
-echo html_writer::tag('textarea', '', array('id' => 'moodlechatbot-textarea', 'placeholder' => 'Type your message here...'));
-echo html_writer::tag('button', 'Send', array('id' => 'moodlechatbot-send'));
+$chatid = 'moodlechatbot-' . uniqid();
+
+echo html_writer::start_tag('div', array('id' => $chatid, 'class' => 'moodlechatbot-container'));
+echo html_writer::tag('div', '', array('data-region' => 'messages'));
+echo html_writer::start_tag('div', array('class' => 'moodlechatbot-input'));
+echo html_writer::tag('textarea', '', array('data-region' => 'input', 'placeholder' => get_string('typemessage', 'mod_moodlechatbot')));
+echo html_writer::tag('button', get_string('send', 'mod_moodlechatbot'), array('data-action' => 'send'));
 echo html_writer::end_tag('div');
 echo html_writer::end_tag('div');
+
+$PAGE->requires->js_call_amd('mod_moodlechatbot/chat', 'init', [$chatid]);
 
 echo $OUTPUT->footer();
