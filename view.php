@@ -52,11 +52,11 @@ $modulecontext = context_module::instance($cm->id);
 #$event->add_record_snapshot('course', $course);
 #$event->add_record_snapshot('moodlechatbot', $moduleinstance);
 #$event->trigger();
-#
-#$PAGE->set_url('/mod/moodlechatbot/view.php', array('id' => $cm->id));
-#$PAGE->set_title(format_string($moduleinstance->name));
-#$PAGE->set_heading(format_string($course->fullname));
-#$PAGE->set_context($modulecontext);
+
+$PAGE->set_url('/mod/moodlechatbot/view.php', array('id' => $cm->id));
+$PAGE->set_title(format_string($moduleinstance->name));
+$PAGE->set_heading(format_string($course->fullname));
+$PAGE->set_context($modulecontext);
 
 echo $OUTPUT->header();
 
