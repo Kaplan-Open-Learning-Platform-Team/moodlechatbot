@@ -1,44 +1,47 @@
-# Moodle Chat Bot #
+# Moodle Chat Bot Plugin
 
-TODO Describe the plugin shortly here.
+## Overview
+The Moodle Chat Bot plugin is an activity module that integrates an AI-powered chatbot into Moodle courses. It uses the Groq API to provide intelligent responses to student queries, enhancing the learning experience.
 
-TODO Provide more detailed description here.
+## Features
+- AI-powered chat interface within Moodle courses
+- Configurable AI model selection
+- Adjustable response length
+- Easy-to-use interface for students and teachers
 
-## Installing via uploaded ZIP file ##
+## Requirements
+- Moodle 3.9 or higher
+- PHP 7.3 or higher
+- Groq API key
 
-1. Log in to your Moodle site as an admin and go to _Site administration >
-   Plugins > Install plugins_.
-2. Upload the ZIP file with the plugin code. You should only be prompted to add
-   extra details if your plugin type is not automatically detected.
-3. Check the plugin validation report and finish the installation.
+## Installation
+1. Download the plugin and extract it to the `mod/moodlechatbot` directory in your Moodle installation.
+2. Log in as an administrator and go to Site Administration > Notifications to complete the installation.
+3. Go to Site Administration > Plugins > Activity Modules > Moodle Chat Bot to configure the global settings.
+4. Enter your Groq API key and select your preferred AI model.
 
-## Installing manually ##
+## Usage
+1. In a course, turn editing on and add a "Moodle Chat Bot" activity.
+2. Configure the activity settings as desired.
+3. Students can then interact with the chat bot by entering messages in the chat interface.
 
-The plugin can be also installed by putting the contents of this directory to
+## Configuration
+Global settings (Site Administration > Plugins > Activity Modules > Moodle Chat Bot):
+- Groq API Key: Enter your Groq API key here.
+- AI Model: Select the AI model to use for responses.
+- Max Tokens: Set the maximum number of tokens for AI responses.
 
-    {your/moodle/dirroot}/mod/moodlechatbot
+## Contributing
+Contributions to the Moodle Chat Bot plugin are welcome. Please submit pull requests to the GitHub repository.
 
-Afterwards, log in to your Moodle site as an admin and go to _Site administration >
-Notifications_ to complete the installation.
+## License
+This plugin is licensed under the GNU GPL v3 or later. See the LICENSE file for details.
 
-Alternatively, you can run
+## Support
+For support, please open an issue on the GitHub repository or contact the plugin maintainer.
 
-    $ php admin/cli/upgrade.php
+## Authors
+[Your Name] <your.email@example.com>
 
-to complete the installation from the command line.
-
-## License ##
-
-2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
-
-This program is free software: you can redistribute it and/or modify it under
-the terms of the GNU General Public License as published by the Free Software
-Foundation, either version 3 of the License, or (at your option) any later
-version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY
-WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
-PARTICULAR PURPOSE.  See the GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License along with
-this program.  If not, see <https://www.gnu.org/licenses/>.
+## Acknowledgements
+This plugin uses the Groq API for generating AI responses.
