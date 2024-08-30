@@ -49,14 +49,14 @@ $event = \mod_moodlechatbot\event\course_module_viewed::create(array(
     'objectid' => $moduleinstance->id,
     'context' => $modulecontext
 ));
-$event->add_record_snapshot('course', $course);
-$event->add_record_snapshot('moodlechatbot', $moduleinstance);
-$event->trigger();
-
-$PAGE->set_url('/mod/moodlechatbot/view.php', array('id' => $cm->id));
-$PAGE->set_title(format_string($moduleinstance->name));
-$PAGE->set_heading(format_string($course->fullname));
-$PAGE->set_context($modulecontext);
+#$event->add_record_snapshot('course', $course);
+#$event->add_record_snapshot('moodlechatbot', $moduleinstance);
+#$event->trigger();
+#
+#$PAGE->set_url('/mod/moodlechatbot/view.php', array('id' => $cm->id));
+#$PAGE->set_title(format_string($moduleinstance->name));
+#$PAGE->set_heading(format_string($course->fullname));
+#$PAGE->set_context($modulecontext);
 
 echo $OUTPUT->header();
 
