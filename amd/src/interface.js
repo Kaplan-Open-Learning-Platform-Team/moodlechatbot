@@ -5,7 +5,7 @@ define(['jquery'], function($) {
     return {
         /**
          * Initializes the chatbot functionality.
-         * 
+         *
          * Sets up event listeners and initializes the chat interface.
          */
         init: function() {
@@ -46,7 +46,7 @@ define(['jquery'], function($) {
 
             /**
              * Displays a message in the chat interface.
-             * 
+             *
              * @param {string} message - The message to display.
              * @param {string} sender - The sender of the message ('user' or 'bot').
              */
@@ -60,7 +60,7 @@ define(['jquery'], function($) {
 
             /**
              * Sends a message to the Ollama API and returns the response.
-             * 
+             *
              * @param {string} message - The message to send to Ollama.
              * @returns {Promise<string>} - A promise that resolves with the Ollama response.
              * @throws {Error} - If there is an error communicating with the Ollama API.
@@ -87,7 +87,7 @@ define(['jquery'], function($) {
                     }
                     const data = await response.json();
                     console.log('Ollama API response data:', data);
-                    return data.choices[0].text.trim(); 
+                    return data.choices[0].text.trim();
                 } catch (error) {
                     console.error('Failed to fetch from Ollama API:', error);
                     throw error;
