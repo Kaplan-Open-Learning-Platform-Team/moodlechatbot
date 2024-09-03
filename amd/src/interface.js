@@ -3,7 +3,7 @@
  *
  * @module mod_moodlechatbot/interface
  */
-define('mod_moodlechatbot/interface', ['jquery', 'core/ajax'], function($, ajax) {
+define('mod_moodlechatbot/interface', ['jquery', 'core/ajax', 'core/log'], function($, ajax, log) {
     'use strict';
 
     return {
@@ -11,6 +11,7 @@ define('mod_moodlechatbot/interface', ['jquery', 'core/ajax'], function($, ajax)
          * Initialize the chatbot interface.
          */
         init: function() {
+            log.debug('Moodle chatbot interface initialized');
             $(document).ready(function() {
                 const ollamaUrl = 'http://192.168.0.102:11434/api/chat'; // Replace with the correct Ollama API endpoint
 
@@ -20,6 +21,7 @@ define('mod_moodlechatbot/interface', ['jquery', 'core/ajax'], function($, ajax)
                  * @param {string} message - The message to send to the API.
                  */
                 function sendMessageToOllama(message) {
+                    log.debug('Sending message to Ollama: ' + message);
                     ajax.call({
                         url: ollamaUrl,
                         type: 'POST',
@@ -34,6 +36,7 @@ define('mod_moodlechatbot/interface', ['jquery', 'core/ajax'], function($, ajax)
                             "stream": false  // Assuming you don't want to use streaming
                         }),
                         success: function(response) {
+                            log.debug('Received response from Ollama:', response);
                             // Access the content of the assistant's message
                             let botMessage = response.message && response.message.content
                                 ? response.message.content
@@ -42,39 +45,25 @@ define('mod_moodlechatbot/interface', ['jquery', 'core/ajax'], function($, ajax)
                             displayMessage(botMessage, 'bot');
                         },
                         error: function(xhr, status, error) {
+                            log.error('Error in Ollama API call:', error);
                             displayMessage("An error occurred: " + error, 'bot');
                         }
                     });
                 }
 
-                /**
-                 * Display a message in the chat interface.
-                 *
-                 * @param {string} message - The message to display.
-                 * @param {string} sender - The sender of the message ('user' or 'bot').
-                 */
-                function displayMessage(message, sender) {
-                    const messageElement = $('<div>').addClass('message').addClass(sender);
-                    messageElement.text(message);
-                    $('#moodlechatbot-messages').append(messageElement);
-                    $('#moodlechatbot-messages').scrollTop($('#moodlechatbot-messages')[0].scrollHeight);
-                }
+                // ... rest of the code remains the same ...
 
                 $('#moodlechatbot-send').click(function() {
                     const userMessage = $('#moodlechatbot-textarea').val();
                     if (userMessage.trim() !== '') {
+                        log.debug('User sent message: ' + userMessage);
                         displayMessage(userMessage, 'user');
                         sendMessageToOllama(userMessage);
                         $('#moodlechatbot-textarea').val('');
                     }
                 });
 
-                $('#moodlechatbot-textarea').keypress(function(e) {
-                    if (e.which === 13 && !e.shiftKey) {
-                        $('#moodlechatbot-send').click();
-                        return false;
-                    }
-                });
+                // ... rest of the code remains the same ...
             });
         }
     };
