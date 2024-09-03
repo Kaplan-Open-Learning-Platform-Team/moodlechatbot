@@ -1,13 +1,24 @@
-// interface.js
-
+/**
+ * Moodle chatbot interface module.
+ *
+ * @module mod_moodlechatbot/interface
+ */
 define('mod_moodlechatbot/interface', ['jquery', 'core/ajax'], function($, ajax) {
     'use strict';
 
     return {
+        /**
+         * Initialize the chatbot interface.
+         */
         init: function() {
             $(document).ready(function() {
                 const ollamaUrl = 'http://192.168.0.102:11434/api/chat'; // Replace with the correct Ollama API endpoint
 
+                /**
+                 * Send a message to the Ollama API and handle the response.
+                 *
+                 * @param {string} message - The message to send to the API.
+                 */
                 function sendMessageToOllama(message) {
                     ajax.call({
                         url: ollamaUrl,
@@ -36,6 +47,12 @@ define('mod_moodlechatbot/interface', ['jquery', 'core/ajax'], function($, ajax)
                     });
                 }
 
+                /**
+                 * Display a message in the chat interface.
+                 *
+                 * @param {string} message - The message to display.
+                 * @param {string} sender - The sender of the message ('user' or 'bot').
+                 */
                 function displayMessage(message, sender) {
                     const messageElement = $('<div>').addClass('message').addClass(sender);
                     messageElement.text(message);
