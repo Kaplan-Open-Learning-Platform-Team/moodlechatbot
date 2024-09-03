@@ -59,7 +59,7 @@ $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
 // Include the JavaScript file
-$PAGE->requires->js_call_amd('local_moodlechatbot/moodlechatbot', 'init');
+$PAGE->requires->js_call_amd('local_moodlechatbot/interface', 'init');
 
 echo $OUTPUT->header();
 
