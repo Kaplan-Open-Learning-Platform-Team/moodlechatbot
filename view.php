@@ -58,6 +58,9 @@ $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
+// Include the JavaScript file
+$PAGE->requires->js_call_amd('local_moodlechatbot/moodlechatbot', 'init');
+
 echo $OUTPUT->header();
 
 echo html_writer::start_tag('div', array('id' => 'moodlechatbot-container'));
@@ -69,6 +72,3 @@ echo html_writer::end_tag('div');
 echo html_writer::end_tag('div');
 
 echo $OUTPUT->footer();
-
-// Include the JavaScript module
-$PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init');
