@@ -27,19 +27,19 @@ define('mod_moodlechatbot/interface', ['jquery', 'core/ajax', 'core/log'], funct
     function sendMessageToOllama(message) {
         log.debug('Sending message to Ollama: ' + message);
         const ollamaUrl = 'http://192.168.0.102:11434/api/chat'; // Replace with the correct Ollama API endpoint
-        
+
         ajax.call({
             url: ollamaUrl,
             type: 'POST',
             data: JSON.stringify({
-                "model": "PHI3.5",  // Use the appropriate model name
+                "model": "PHI3.5", // Use the appropriate model name
                 "messages": [
                     {
                         "role": "user",
-                        "content": message  // The user's input message
+                        "content": message // The user's input message
                     }
                 ],
-                "stream": false  // Assuming you don't want to use streaming
+                "stream": false // Assuming you don't want to use streaming
             }),
             success: function(response) {
                 log.debug('Received response from Ollama:', response);
