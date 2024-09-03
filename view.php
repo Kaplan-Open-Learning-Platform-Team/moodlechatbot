@@ -71,4 +71,6 @@ echo html_writer::end_tag('div');
 echo $OUTPUT->footer();
 
 // Include the JavaScript module
-$PAGE->requires->js_call_amd('local_moodlechatbot/moodlechatbot', 'init');
+$PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init', array(
+    'path' => '/mod/moodlechatbot/amd/src/interface.js'
+));
