@@ -1,51 +1,64 @@
-define(['jquery', 'core/ajax', 'core/notification'], function($, Ajax, Notification) {
-    return {
-        init: function() {
-            var messagesContainer = $('#moodlechatbot-messages');
-            var textArea = $('#moodlechatbot-textarea');
-            var sendButton = $('#moodlechatbot-send');
+// interfaceLocal.js 
 
-            function addMessage(message, isUser) {
-                var messageElement = $('<div>').addClass('message');
-                if (isUser) {
-                    messageElement.addClass('user-message');
-                } else {
-                    messageElement.addClass('bot-message');
-                }
-                messageElement.text(message);
-                messagesContainer.append(messageElement);
-                messagesContainer.scrollTop(messagesContainer[0].scrollHeight);
-            }
+require(['jquery', 'core/ajax'], function($, ajax) {
+    $(document).ready(function() {
+        const ollamaUrl = 'http://192.168.0.102:11434/api/chat'; // Replace with the correct Ollama API endpoint
 
-            function sendMessage() {
-                var message = textArea.val().trim();
-                if (message) {
-                    addMessage(message, true);
-                    textArea.val('');
+        function sendMessageToOllama(message) {
+            console.log("Sending message to Ollama:", message);
 
-                    Ajax.call([{
-                        methodname: 'local_moodlechatbot_send_message',
-                        args: { message: message },
-                        done: function(response) {
-                            if (response && response.response) {
-                                addMessage(response.response);
-                            } else {
-                                addMessage('Sorry, I couldn\'t process that request.');
-                            }
-                        },
-                        fail: Notification.exception
-                    }]);
-                }
-            }
+            ajax.call({
+                url: ollamaUrl,
+                type: 'POST',
+                data: JSON.stringify({
+                    "model": "PHI3.5",  // Use the appropriate model name
+                    "messages": [
+                        {
+                            "role": "user",
+                            "content": message  // The user's input message
+                        }
+                    ],
+                    "stream": false  // Assuming you don't want to use streaming
+                }),
+                success: function (response) {
+                    console.log("Received response from Ollama:", response);
 
-            sendButton.on('click', sendMessage);
+                    // Access the content of the assistant's message
+                    let botMessage = response.message && response.message.content
+                        ? response.message.content
+                        : "No response received from the assistant.";
 
-            textArea.on('keypress', function(e) {
-                if (e.which === 13 && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
+                    console.log("Parsed bot message:", botMessage);
+                    displayMessage(botMessage, 'bot');
+                },
+                error: function (xhr, status, error) {
+                    console.error("Error occurred:", error);
+                    displayMessage("An error occurred: " + error, 'bot');
                 }
             });
         }
-    };
+
+        function displayMessage(message, sender) {
+            const messageElement = $('<div>').addClass('message').addClass(sender);
+            messageElement.text(message);
+            $('#moodlechatbot-messages').append(messageElement);
+            $('#moodlechatbot-messages').scrollTop($('#moodlechatbot-messages')[0].scrollHeight);
+        }
+
+        $('#moodlechatbot-send').click(function() {
+            const userMessage = $('#moodlechatbot-textarea').val();
+            if (userMessage.trim() !== '') {
+                displayMessage(userMessage, 'user');
+                sendMessageToOllama(userMessage);
+                $('#moodlechatbot-textarea').val('');
+            }
+        });
+
+        $('#moodlechatbot-textarea').keypress(function(e) {
+            if (e.which === 13 && !e.shiftKey) {
+                $('#moodlechatbot-send').click();
+                return false;
+            }
+        });
+    });
 });
