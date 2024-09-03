@@ -8,7 +8,7 @@
 define('mod_moodlechatbot/interface', ['jquery', 'core/ajax', 'core/log'], function($, ajax, log) {
     'use strict';
 
-    console.log('Moodle chatbot interface module loaded');
+    log.debug('Moodle chatbot interface module loaded');
 
     /**
      * Display a message in the chat interface.
