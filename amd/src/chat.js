@@ -15,8 +15,7 @@ const Selectors = {
  * @param {string} uniqueId The unique identifier for this chat instance.
  */
 export const init = (uniqueId) => {
-    // Add a space before the uniqueId
-    const chatContainerSelector = `${Selectors.CHAT_CONTAINER} #${uniqueId}`;
+    const chatContainerSelector = `#${uniqueId}`;
     const chatContainer = document.querySelector(chatContainerSelector);
 
     if (!chatContainer) {
