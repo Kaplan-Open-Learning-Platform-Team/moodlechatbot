@@ -1,0 +1,22 @@
+<form id="mod_moodlechatbot_input_form_{{uniqid}}" class="mod_moodlechatbot_input_form">
+    <input type="hidden" name="sesskey" value="{{sesskey}}">
+    <input type="hidden" name="chatbotid" value="{{chatbotid}}">
+    <div class="mod_moodlechatbot_input_wrapper">
+        <textarea name="message" rows="3" 
+                  class="form-control" 
+                  data-region="input" 
+                  placeholder="{{#str}}typemessage, mod_moodlechatbot{{/str}}"
+                  aria-label="{{#str}}typemessage, mod_moodlechatbot{{/str}}"></textarea>
+        <button type="submit" 
+                class="btn btn-primary" 
+                data-action="send">
+            {{#str}}send, mod_moodlechatbot{{/str}}
+        </button>
+    </div>
+</form>
+
+{{#js}}
+require(['mod_moodlechatbot/chat_input'], function(ChatInput) {
+    ChatInput.init('#mod_moodlechatbot_input_form_{{uniqid}}');
+});
+{{/js}}
