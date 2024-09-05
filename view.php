@@ -58,9 +58,6 @@ $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
-// Include the JavaScript file
-$PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init');
-
 echo $OUTPUT->header();
 
 echo html_writer::start_tag('div', array('id' => 'moodlechatbot-container'));
@@ -70,5 +67,8 @@ echo html_writer::tag('textarea', '', array('id' => 'moodlechatbot-textarea', 'p
 echo html_writer::tag('button', 'Send', array('id' => 'moodlechatbot-send'));
 echo html_writer::end_tag('div');
 echo html_writer::end_tag('div');
+
+// Include the JavaScript module
+$PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init');
 
 echo $OUTPUT->footer();
