@@ -21,7 +21,10 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             const userInput = textarea.value.trim();
 
             // Ensure the user input is not empty
-            if (!userInput) return;
+            if (!userInput) {
+                return;
+            }
+
 
             // Append the user's message to the chat
             appendMessage("user", userInput);
