@@ -2,7 +2,9 @@
 define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
     // Initialize function to bind events and set up the chatbot
-    const init = () => {
+    const init = (userId) => {
+        // Log the userId to ensure it's being passed correctly
+        log.debug('Current User ID:', userId);
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
         const messagesContainer = document.getElementById("moodlechatbot-messages");
