@@ -1,5 +1,9 @@
 define(['core/ajax', 'core/log'], function(ajax, log) {
     return {
+        /**
+         * Initialize the MoodleChatbot interface.
+         * This function sets up the chat UI and event listeners.
+         */
         init: function() {
             const messagesContainer = document.getElementById('moodlechatbot-messages');
             const textarea = document.getElementById('moodlechatbot-textarea');
@@ -11,6 +15,11 @@ define(['core/ajax', 'core/log'], function(ajax, log) {
                 log.debug('MoodleChatbot: Error finding DOM elements.');
             }
 
+            /**
+             * Add a message to the chat interface.
+             * @param {string} content - The message content to be added.
+             * @param {boolean} [isUser=false] - Whether the message is from the user (true) or the bot (false).
+             */
             function addMessage(content, isUser = false) {
                 const messageElement = document.createElement('div');
                 messageElement.classList.add('message');
@@ -21,6 +30,9 @@ define(['core/ajax', 'core/log'], function(ajax, log) {
                 log.debug('MoodleChatbot: Added message:', content, '(isUser:', isUser, ')');
             }
 
+            /**
+             * Send a message to the chatbot API and handle the response.
+             */
             function sendMessage() {
                 const message = textarea.value.trim();
                 if (message) {
