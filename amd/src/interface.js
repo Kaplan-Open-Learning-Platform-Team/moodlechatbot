@@ -4,7 +4,8 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
     // Initialize function to bind events and set up the chatbot
     const init = (userId) => {
         // Log the userId to ensure it's being passed correctly
-        log.debug('Current User ID:', userId);
+        Log.debug('Current User ID:', userId);  // Use 'Log' instead of 'log'
+        
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
         const messagesContainer = document.getElementById("moodlechatbot-messages");
@@ -26,7 +27,6 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             if (!userInput) {
                 return;
             }
-
 
             // Append the user's message to the chat
             appendMessage("user", userInput);
@@ -69,7 +69,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             })
             .catch(error => {
                 appendMessage("assistant", "There was an error connecting to the server.");
-                Log.error('Fetch Error:', error);
+                Log.error('Fetch Error:', error);  // Log the error using 'Log.error'
             });
         };
 
