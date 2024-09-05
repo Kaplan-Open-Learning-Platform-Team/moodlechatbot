@@ -27,6 +27,7 @@ export const init = (chatId) => {
             messagesContainer.insertAdjacentHTML('beforeend', messageHtml.html);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
+            Log.error('Error displaying message:', error);
             Notification.exception(error);
         }
     };
@@ -41,15 +42,23 @@ export const init = (chatId) => {
             methodname: 'mod_moodlechatbot_send_message',
             args: { chatbotid: chatbotId, message: message },
             done: async (response) => {
-                await displayMessage({ sender: 'You', content: message, isbot: false });
-                input.value = '';
-                if (response.status === 'success') {
-                    await displayMessage({ sender: 'Bot', content: response.message, isbot: true });
-                } else {
-                    Notification.alert('Error', response.message);
+                try {
+                    await displayMessage({ sender: 'You', content: message, isbot: false });
+                    input.value = '';
+                    if (response.status === 'success') {
+                        await displayMessage({ sender: 'Bot', content: response.message, isbot: true });
+                    } else {
+                        Notification.alert('Error', response.message);
+                    }
+                } catch (error) {
+                    Log.error('Error processing response:', error);
+                    Notification.exception(error);
                 }
             },
-            fail: Notification.exception
+            fail: (error) => {
+                Log.error('AJAX call failed:', error);
+                Notification.exception(error);
+            }
         }]);
     };
 
