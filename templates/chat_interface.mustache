@@ -1,7 +1,3 @@
-<div id="{{chatid}}" class="mod_moodlechatbot_chat" data-chatbotid="{{chatbotid}}">
-    <div data-region="messages"></div>
-    <div class="mod_moodlechatbot_input">
-        <textarea data-region="input" placeholder="{{placeholder}}" rows="3"></textarea>
-        <button data-action="send" class="btn btn-primary">{{sendlabel}}</button>
-    </div>
+<div class="message {{#isbot}}bot-message{{/isbot}}{{^isbot}}user-message{{/isbot}}">
+    <strong>{{sender}}:</strong> {{{content}}}
 </div>

@@ -24,6 +24,7 @@ export const init = (chatId) => {
     const displayMessage = async (messageData) => {
         try {
             const messageHtml = await Templates.renderForPromise('mod_moodlechatbot/chat_message', messageData);
+            // Only append the new message, not the entire chat interface
             messagesContainer.insertAdjacentHTML('beforeend', messageHtml.html);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
@@ -38,14 +39,17 @@ export const init = (chatId) => {
 
         const chatbotId = chatContainer.dataset.chatbotid;
 
+        // Display user message immediately
+        displayMessage({ sender: 'You', content: message, isbot: false });
+        input.value = ''; // Clear input after sending
+
         Ajax.call([{
             methodname: 'mod_moodlechatbot_send_message',
             args: { chatbotid: chatbotId, message: message },
             done: async (response) => {
                 try {
-                    await displayMessage({ sender: 'You', content: message, isbot: false });
-                    input.value = '';
                     if (response.status === 'success') {
+                        // Display bot response
                         await displayMessage({ sender: 'Bot', content: response.message, isbot: true });
                     } else {
                         Notification.alert('Error', response.message);
