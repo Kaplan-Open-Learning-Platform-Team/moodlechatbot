@@ -33,15 +33,27 @@ $string['moodlechatbotname_help'] = 'This is the name of the Moodle Chat Bot ins
 $string['moodlechatbotsettings'] = 'Moodle Chat Bot Settings';
 $string['moodlechatbotfieldset'] = 'Custom example fieldset';
 $string['pluginadministration'] = 'Moodle Chat Bot Administration';
+
+// Chat interface strings
 $string['typemessage'] = 'Type your message here...';
 $string['send'] = 'Send';
-$string['messagesent'] = 'Your message has been sent!';
-$string['messagefailed'] = 'Failed to send message. Please try again.';
-$string['botresponse'] = 'Chat Bot Response';
+$string['botresponse'] = 'Bot Response';
+
+// Error messages
+$string['errornomessage'] = 'Please enter a message.';
+$string['errorsendfailed'] = 'Failed to send message. Please try again.';
+
+// Capability strings
+$string['moodlechatbot:addinstance'] = 'Add a new Moodle Chat Bot';
+$string['moodlechatbot:view'] = 'View Moodle Chat Bot';
+$string['moodlechatbot:interact'] = 'Interact with Moodle Chat Bot';
+
+// Settings strings
+$string['apikey'] = 'API Key';
+$string['apikey_desc'] = 'Enter the API key for the chat bot service.';
+$string['maxresponselength'] = 'Maximum Response Length';
+$string['maxresponselength_desc'] = 'The maximum number of characters in the bot\'s response.';
+
+// Event strings
 $string['eventmessagesent'] = 'Message sent';
-$string['groq_api_key'] = 'Groq API Key';
-$string['groq_api_key_desc'] = 'Enter your Groq API key here';
-$string['ai_model'] = 'AI Model';
-$string['ai_model_desc'] = 'Select the AI model to use for the chatbot';
-$string['max_tokens'] = 'Maximum Tokens';
-$string['max_tokens_desc'] = 'Set the maximum number of tokens for AI responses';
+$string['eventresponsegenerated'] = 'Response generated';
