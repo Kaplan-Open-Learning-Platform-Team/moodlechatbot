@@ -37,3 +37,71 @@
 #moodlechatbot-send:hover {
     background-color: #0e63b0;
 }
+
+/* Chat container styling */
+#chat-container {
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 10px;
+}
+
+/* Basic message bubble styles */
+.message {
+    padding: 10px;
+    margin: 10px;
+    max-width: 70%;
+    border-radius: 15px;
+    font-size: 14px;
+}
+
+/* User message styling */
+.user {
+    background-color: #e6f7ff;
+    color: #000;
+    text-align: left;
+    float: left;
+    clear: both;
+    border-radius: 15px 15px 15px 0;
+}
+
+/* Assistant message styling */
+.assistant {
+    background-color: #f1f1f1;
+    color: #000;
+    text-align: right;
+    float: right;
+    clear: both;
+    border-radius: 15px 15px 0 15px;
+}
+
+/* Clear floats after each message */
+.chat-container::after {
+    content: "";
+    clear: both;
+    display: table;
+}
+
+/* Input box styling */
+#moodlechatbot-input textarea {
+    width: calc(100% - 60px);
+    border: 1px solid #ccc;
+    border-radius: 15px;
+    padding: 10px;
+    margin-right: 10px;
+    resize: none;
+    font-size: 14px;
+}
+
+/* Send button styling */
+#moodlechatbot-send {
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 15px;
+    cursor: pointer;
+}
+
+#moodlechatbot-send:hover {
+    background-color: #45a049;
+}
