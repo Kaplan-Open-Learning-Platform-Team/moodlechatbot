@@ -22,60 +22,81 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-namespace mod_moodlechatbot\output;
-
 defined('MOODLE_INTERNAL') || die();
 
-use plugin_renderer_base;
-use renderable;
-
 /**
- * Renderer for mod_moodlechatbot.
+ * Renderer class for mod_moodlechatbot.
  *
+ * @package    mod_moodlechatbot
  * @copyright  2024 Your Name <your@email.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class renderer extends plugin_renderer_base {
+class mod_moodlechatbot_renderer extends plugin_renderer_base {
 
     /**
-     * Render the chat interface.
+     * Render the main chat interface.
      *
-     * @param renderable $chat The chat renderable object.
-     * @return string HTML to output.
+     * @param int $chatbotid The ID of the chat bot instance.
+     * @param array $messages An array of message objects to display.
+     * @return string HTML for the chat interface.
      */
-    public function render_chat(renderable $chat) {
-        $data = $chat->export_for_template($this);
+    public function render_chat_interface($chatbotid, $messages = []) {
+        $data = [
+            'chatbotid' => $chatbotid,
+            'messages' => $messages,
+            'inputplaceholder' => get_string('typemessage', 'mod_moodlechatbot'),
+            'sendlabel' => get_string('send', 'mod_moodlechatbot')
+        ];
         return $this->render_from_template('mod_moodlechatbot/chat_interface', $data);
     }
 
     /**
      * Render a single chat message.
      *
-     * @param \stdClass $message The message object.
-     * @return string HTML to output.
+     * @param object $message The message object.
+     * @return string HTML for the message.
      */
     public function render_message($message) {
         $data = [
-            'id' => $message->id,
-            'userid' => $message->userid,
-            'message' => format_text($message->message, FORMAT_MOODLE),
-            'timecreated' => userdate($message->timecreated),
-            'isbot' => !empty($message->isbot),
+            'sender' => $message->sender,
+            'content' => $message->content,
+            'timestamp' => userdate($message->timestamp),
+            'isbot' => !empty($message->isbot)
         ];
-        return $this->render_from_template('mod_moodlechatbot/chat_message', $data);
+        return $this->render_from_template('mod_moodlechatbot/message', $data);
     }
 
     /**
-     * Render the chat input form.
+     * Render the input area for the chat.
      *
-     * @param int $chatbotid The ID of the chatbot instance.
-     * @return string HTML to output.
+     * @param int $chatbotid The ID of the chat bot instance.
+     * @return string HTML for the input area.
      */
-    public function render_input_form($chatbotid) {
+    public function render_input_area($chatbotid) {
         $data = [
             'chatbotid' => $chatbotid,
-            'sesskey' => sesskey(),
+            'inputplaceholder' => get_string('typemessage', 'mod_moodlechatbot'),
+            'sendlabel' => get_string('send', 'mod_moodlechatbot')
         ];
-        return $this->render_from_template('mod_moodlechatbot/chat_input', $data);
+        return $this->render_from_template('mod_moodlechatbot/input_area', $data);
+    }
+
+    /**
+     * Render a loading indicator.
+     *
+     * @return string HTML for the loading indicator.
+     */
+    public function render_loading_indicator() {
+        return $this->render_from_template('mod_moodlechatbot/loading', []);
+    }
+
+    /**
+     * Render an error message.
+     *
+     * @param string $message The error message to display.
+     * @return string HTML for the error message.
+     */
+    public function render_error_message($message) {
+        return $this->render_from_template('mod_moodlechatbot/error', ['message' => $message]);
     }
 }
