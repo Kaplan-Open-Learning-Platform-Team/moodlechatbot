@@ -10,7 +10,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         // Function to append messages to the chat
         const appendMessage = (role, content) => {
             const messageElement = document.createElement("div");
-            messageElement.classList.add(role); // user or assistant
+            messageElement.classList.add('message', role); // 'message' class with 'user' or 'assistant' roles
             messageElement.textContent = content;
             messagesContainer.appendChild(messageElement);
             messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to the bottom
