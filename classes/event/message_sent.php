@@ -14,6 +14,14 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+/**
+ * The mod_moodlechatbot message sent event.
+ *
+ * @package    mod_moodlechatbot
+ * @copyright  2024 Your Name <your@email.com>
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
+
 namespace mod_moodlechatbot\event;
 
 defined('MOODLE_INTERNAL') || die();
@@ -75,8 +83,14 @@ class message_sent extends \core\event\base {
     protected function validate_data() {
         parent::validate_data();
 
-        if (!isset($this->other['chatbotid'])) {
-            throw new \coding_exception('The \'chatbotid\' value must be set in other.');
+        if (!isset($this->objectid)) {
+            throw new \coding_exception('The \'objectid\' must be set.');
+        }
+        if (!isset($this->contextinstanceid)) {
+            throw new \coding_exception('The \'contextinstanceid\' must be set.');
+        }
+        if ($this->contextlevel != CONTEXT_MODULE) {
+            throw new \coding_exception('Context level must be CONTEXT_MODULE.');
         }
     }
 
@@ -88,6 +102,6 @@ class message_sent extends \core\event\base {
     protected function get_legacy_logdata() {
         return array($this->courseid, 'moodlechatbot', 'send message', 
                'view.php?id=' . $this->contextinstanceid, 
-               $this->other['chatbotid'], $this->contextinstanceid);
+               $this->objectid, $this->contextinstanceid);
     }
 }
