@@ -15,7 +15,8 @@ const Selectors = {
  * @param {string} uniqueId The unique identifier for this chat instance.
  */
 export const init = (uniqueId) => {
-    const chatContainerSelector = Selectors.CHAT_CONTAINER + uniqueId;
+    // Add a space before the uniqueId
+    const chatContainerSelector = `${Selectors.CHAT_CONTAINER} #${uniqueId}`;
     const chatContainer = document.querySelector(chatContainerSelector);
 
     if (!chatContainer) {
@@ -26,7 +27,7 @@ export const init = (uniqueId) => {
     const messagesContainer = chatContainer.querySelector(Selectors.MESSAGES_CONTAINER);
 
     if (!messagesContainer) {
-        Log.debug(`Messages container not found within chat container`);
+        Log.debug('Messages container not found within chat container');
         return;
     }
 

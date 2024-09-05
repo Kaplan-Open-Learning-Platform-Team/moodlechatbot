@@ -1,4 +1,4 @@
-<?php
+i<?php
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -45,13 +45,13 @@ require_login($course, true, $cm);
 
 $modulecontext = context_module::instance($cm->id);
 
-#$event = \mod_moodlechatbot\event\course_module_viewed::create(array(
-#    'objectid' => $moduleinstance->id,
-#    'context' => $modulecontext
-#));
-#$event->add_record_snapshot('course', $course);
-#$event->add_record_snapshot('moodlechatbot', $moduleinstance);
-#$event->trigger();
+$event = \mod_moodlechatbot\event\course_module_viewed::create(array(
+    'objectid' => $moduleinstance->id,
+    'context' => $modulecontext
+));
+$event->add_record_snapshot('course', $course);
+$event->add_record_snapshot('moodlechatbot', $moduleinstance);
+$event->trigger();
 
 $PAGE->set_url('/mod/moodlechatbot/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($moduleinstance->name));
@@ -60,13 +60,30 @@ $PAGE->set_context($modulecontext);
 
 echo $OUTPUT->header();
 
+echo $OUTPUT->heading(format_string($moduleinstance->name), 2);
+
+if ($moduleinstance->intro) {
+    echo $OUTPUT->box(format_module_intro('moodlechatbot', $moduleinstance, $cm->id), 'generalbox mod_introbox', 'moodlechatbotintro');
+}
+
 $chatid = 'moodlechatbot-' . uniqid();
 
-echo html_writer::start_tag('div', array('id' => $chatid, 'class' => 'mod_moodlechatbot_chat', 'data-chatbotid' => $cm->instance));
+echo html_writer::start_tag('div', array(
+    'id' => $chatid,
+    'class' => 'mod_moodlechatbot_chat',
+    'data-chatbotid' => $cm->instance
+));
 echo html_writer::tag('div', '', array('data-region' => 'messages'));
 echo html_writer::start_tag('div', array('class' => 'mod_moodlechatbot_input'));
-echo html_writer::tag('textarea', '', array('data-region' => 'input', 'placeholder' => get_string('typemessage', 'mod_moodlechatbot')));
-echo html_writer::tag('button', get_string('send', 'mod_moodlechatbot'), array('data-action' => 'send'));
+echo html_writer::tag('textarea', '', array(
+    'data-region' => 'input',
+    'placeholder' => get_string('typemessage', 'mod_moodlechatbot'),
+    'rows' => 3
+));
+echo html_writer::tag('button', get_string('send', 'mod_moodlechatbot'), array(
+    'data-action' => 'send',
+    'class' => 'btn btn-primary'
+));
 echo html_writer::end_tag('div');
 echo html_writer::end_tag('div');
 
