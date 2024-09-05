@@ -5,6 +5,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
     const init = (userId) => {
         // Log the userId to ensure it's being passed correctly
         Log.debug('Current User ID:', userId);  // Use 'Log' instead of 'log'
+        Log.debug('Chatbot module initialized');
 
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
