@@ -1,4 +1,4 @@
-#interface.js
+
 define(['core/ajax', 'core/log'], function(ajax, log) {
     return {
         init: function() {
