@@ -62,9 +62,9 @@ echo $OUTPUT->header();
 
 $chatid = 'moodlechatbot-' . uniqid();
 
-echo html_writer::start_tag('div', array('id' => $chatid, 'class' => 'moodlechatbot-container'));
+echo html_writer::start_tag('div', array('id' => $chatid, 'class' => 'mod_moodlechatbot_chat', 'data-chatbotid' => $cm->instance));
 echo html_writer::tag('div', '', array('data-region' => 'messages'));
-echo html_writer::start_tag('div', array('class' => 'moodlechatbot-input'));
+echo html_writer::start_tag('div', array('class' => 'mod_moodlechatbot_input'));
 echo html_writer::tag('textarea', '', array('data-region' => 'input', 'placeholder' => get_string('typemessage', 'mod_moodlechatbot')));
 echo html_writer::tag('button', get_string('send', 'mod_moodlechatbot'), array('data-action' => 'send'));
 echo html_writer::end_tag('div');

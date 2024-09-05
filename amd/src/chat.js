@@ -2,6 +2,7 @@ import Ajax from 'core/ajax';
 import Notification from 'core/notification';
 import * as Templates from 'core/templates';
 import { init as initChatInput } from './chat_input';
+import Log from 'core/log';
 
 const Selectors = {
     CHAT_CONTAINER: '.mod_moodlechatbot_chat',
@@ -14,8 +15,20 @@ const Selectors = {
  * @param {string} uniqueId The unique identifier for this chat instance.
  */
 export const init = (uniqueId) => {
-    const chatContainer = document.querySelector(Selectors.CHAT_CONTAINER + uniqueId);
+    const chatContainerSelector = Selectors.CHAT_CONTAINER + uniqueId;
+    const chatContainer = document.querySelector(chatContainerSelector);
+
+    if (!chatContainer) {
+        Log.debug(`Chat container not found with selector: ${chatContainerSelector}`);
+        return;
+    }
+
     const messagesContainer = chatContainer.querySelector(Selectors.MESSAGES_CONTAINER);
+
+    if (!messagesContainer) {
+        Log.debug(`Messages container not found within chat container`);
+        return;
+    }
 
     /**
      * Display a new message in the chat.
@@ -38,6 +51,11 @@ export const init = (uniqueId) => {
     const loadChatHistory = () => {
         const chatbotId = chatContainer.dataset.chatbotid;
         
+        if (!chatbotId) {
+            Log.debug('Chatbot ID not found in chat container dataset');
+            return;
+        }
+
         Ajax.call([{
             methodname: 'mod_moodlechatbot_get_chat_history',
             args: { chatbotid: chatbotId },
@@ -58,4 +76,6 @@ export const init = (uniqueId) => {
     chatContainer.addEventListener('mod_moodlechatbot:messagesent', (event) => {
         displayMessage(event.detail);
     });
+
+    Log.debug('Chat initialized successfully');
 };
