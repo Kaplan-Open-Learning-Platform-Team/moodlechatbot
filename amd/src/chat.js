@@ -1,82 +1,61 @@
 import Ajax from 'core/ajax';
-import { get_string as getString } from 'core/str';
-import * as Repository from './repository';
+import Notification from 'core/notification';
+import * as Templates from 'core/templates';
+import { init as initChatInput } from './chat_input';
 
 const Selectors = {
-    actions: {
-        send: '[data-action="send"]'
-    },
-    regions: {
-        messages: '[data-region="messages"]',
-        input: '[data-region="input"]'
-    }
+    CHAT_CONTAINER: '.mod_moodlechatbot_chat',
+    MESSAGES_CONTAINER: '[data-region="messages"]',
 };
 
 /**
- * Initialize the chat module.
+ * Initialize the chat functionality.
  *
- * @param {string} containerId The id of the chat container.
+ * @param {string} uniqueId The unique identifier for this chat instance.
  */
-export const init = (containerId) => {
-    const container = document.getElementById(containerId);
-    const messagesRegion = container.querySelector(Selectors.regions.messages);
-    const inputRegion = container.querySelector(Selectors.regions.input);
-    const sendButton = container.querySelector(Selectors.actions.send);
+export const init = (uniqueId) => {
+    const chatContainer = document.querySelector(Selectors.CHAT_CONTAINER + uniqueId);
+    const messagesContainer = chatContainer.querySelector(Selectors.MESSAGES_CONTAINER);
 
     /**
-     * Append a message to the chat.
+     * Display a new message in the chat.
      *
-     * @param {string} sender The sender of the message.
-     * @param {string} message The message content.
+     * @param {Object} messageData The message data to display.
      */
-    const appendMessage = (sender, message) => {
-        const messageElement = document.createElement('p');
-        messageElement.innerHTML = `<strong>${sender}:</strong> ${message}`;
-        messagesRegion.appendChild(messageElement);
-        messagesRegion.scrollTop = messagesRegion.scrollHeight;
-    };
-
-    /**
-     * Send a message to the server.
-     *
-     * @param {string} message The message to send.
-     * @return {Promise}
-     */
-    const sendMessage = async (message) => {
+    const displayMessage = async (messageData) => {
         try {
-            const response = await Repository.sendChatMessage(message);
-            if (response.status === 'success') {
-                appendMessage('Bot', response.message);
-            } else {
-                const errorString = await getString('error', 'moodle');
-                appendMessage('Bot', errorString);
-            }
+            const messageHtml = await Templates.render('mod_moodlechatbot/chat_message', messageData);
+            messagesContainer.insertAdjacentHTML('beforeend', messageHtml);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         } catch (error) {
-            const errorString = await getString('error', 'moodle');
-            appendMessage('Bot', errorString);
+            Notification.exception(error);
         }
     };
 
     /**
-     * Register event listeners.
+     * Fetch and display chat history.
      */
-    const registerEventListeners = () => {
-        sendButton.addEventListener('click', () => {
-            const message = inputRegion.value.trim();
-            if (message) {
-                appendMessage('You', message);
-                inputRegion.value = '';
-                sendMessage(message);
-            }
-        });
-
-        inputRegion.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendButton.click();
-            }
-        });
+    const loadChatHistory = () => {
+        const chatbotId = chatContainer.dataset.chatbotid;
+        
+        Ajax.call([{
+            methodname: 'mod_moodlechatbot_get_chat_history',
+            args: { chatbotid: chatbotId },
+            done: (messages) => {
+                messages.forEach(displayMessage);
+            },
+            fail: Notification.exception
+        }]);
     };
 
-    registerEventListeners();
+    // Initialize chat input
+    initChatInput(uniqueId);
+
+    // Load chat history
+    loadChatHistory();
+
+    // Listen for new messages
+    chatContainer.addEventListener('mod_moodlechatbot:messagesent', (event) => {
+        displayMessage(event.detail);
+    });
 };
