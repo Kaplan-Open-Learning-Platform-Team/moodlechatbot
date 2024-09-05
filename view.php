@@ -1,4 +1,4 @@
-i<?php
+<?php
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
@@ -58,6 +58,7 @@ $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
+// Start output here.
 echo $OUTPUT->header();
 
 echo $OUTPUT->heading(format_string($moduleinstance->name), 2);
