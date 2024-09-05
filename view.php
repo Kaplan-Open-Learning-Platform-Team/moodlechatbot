@@ -68,7 +68,10 @@ echo html_writer::tag('button', 'Send', array('id' => 'moodlechatbot-send'));
 echo html_writer::end_tag('div');
 echo html_writer::end_tag('div');
 
-// Include the JavaScript module
-$PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init');
+global $USER;  // Get the global $USER object to access the current user data.
+$userid = $USER->id;  // Capture the user ID.
+
+// Include the JavaScript module and Pass the user ID to your JavaScript file.
+$PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init', array($userid));
 
 echo $OUTPUT->footer();
