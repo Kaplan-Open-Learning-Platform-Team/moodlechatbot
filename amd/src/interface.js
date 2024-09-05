@@ -1,96 +1,76 @@
-// mod/moodlechatbot/amd/src/interface.js
+#interface.js
+define(['core/ajax', 'core/log'], function(ajax, log) {
+    return {
+        init: function() {
+            const messagesContainer = document.getElementById('moodlechatbot-messages');
+            const textarea = document.getElementById('moodlechatbot-textarea');
+            const sendButton = document.getElementById('moodlechatbot-send');
 
-import Log from 'core/log';
-import Notification from 'core/notification';
+            // Debug: Check if DOM elements are found
+            if (messagesContainer && textarea && sendButton) {
+                log.debug('MoodleChatbot: DOM elements found successfully.'); 
+            } else {
+                log.debug('MoodleChatbot: Error finding DOM elements.'); 
+            }
 
-const Selectors = {
-    messages: '#moodlechatbot-messages',
-    sendButton: '#moodlechatbot-send',
-    textarea: '#moodlechatbot-textarea'
-};
+            function addMessage(content, isUser = false) {
+                const messageElement = document.createElement('div');
+                messageElement.classList.add('message');
+                messageElement.classList.add(isUser ? 'user-message' : 'bot-message');
+                messageElement.textContent = content;
+                messagesContainer.appendChild(messageElement);
+                messagesContainer.scrollTop = messagesContainer.scrollHeight;
 
-/**
- * Display a message in the chat interface.
- *
- * @param {string} message - The message to display.
- * @param {string} sender - The sender of the message ('user' or 'bot').
- */
-const displayMessage = (message, sender) => {
-    const messagesContainer = document.querySelector(Selectors.messages);
-    const messageElement = document.createElement('div');
-    messageElement.classList.add('message', sender);
-    messageElement.textContent = message;
-    messagesContainer.appendChild(messageElement);
-    messagesContainer.scrollTop = messagesContainer.scrollHeight;
-};
+                // Debug: Log added message
+                log.debug('MoodleChatbot: Added message:', content, '(isUser:', isUser, ')'); 
+            }
 
-/**
- * Send a message to the Ollama API and handle the response.
- *
- * @param {string} message - The message to send to the API.
- * @return {Promise}
- */
-const sendMessageToOllama = (message) => {
-    Log.debug('Sending message to Ollama: ' + message);
-    const ollamaUrl = 'http://192.168.0.102:11434/api/chat'; // Replace with the correct Ollama API endpoint
+            function sendMessage() {
+                const message = textarea.value.trim();
+                if (message) {
+                    addMessage(message, true);
+                    textarea.value = '';
 
-    return fetch(ollamaUrl, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-            model: "PHI3.5", // Use the appropriate model name
-            messages: [
-                {
-                    role: "user",
-                    content: message
+                    // Debug: Log message being sent to API
+                    log.debug('MoodleChatbot: Sending message to API:', message); 
+
+                    // Send request to Ollama API
+                    fetch('http://192.168.0.102:11434/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            model: 'llama2', // Adjust this to the model you're using
+                            messages: [{ role: 'user', content: message }],
+                        }),
+                    })
+                    .then(response => {
+                        // Debug: Log API response status
+                        log.debug('MoodleChatbot: API response status:', response.status); 
+                        return response.json();
+                    })
+                    .then(data => {
+                        const botResponse = data.message.content;
+                        addMessage(botResponse);
+
+                        // Debug: Log API response data
+                        log.debug('MoodleChatbot: API response data:', data); 
+                    })
+                    .catch(error => {
+                        log.error('MoodleChatbot: Error:', error); 
+                        addMessage('Sorry, there was an error processing your request.');
+                    });
                 }
-            ],
-            stream: false
-        })
-    })
-    .then(response => response.json())
-    .then((response) => {
-        Log.debug('Received response from Ollama:', response);
-        let botMessage = response.message && response.message.content
-            ? response.message.content
-            : "No response received from the assistant.";
-
-        displayMessage(botMessage, 'bot');
-    })
-    .catch((error) => {
-        Log.error('Error in Ollama API call:', error);
-        displayMessage("An error occurred while processing your request.", 'bot');
-        Notification.exception(error);
-    });
-};
-
-/**
- * Initialize the chatbot interface.
- */
-export const init = () => {
-    Log.debug('Moodle chatbot interface initialized');
-
-    document.addEventListener('DOMContentLoaded', () => {
-        const sendButton = document.querySelector(Selectors.sendButton);
-        const textarea = document.querySelector(Selectors.textarea);
-
-        sendButton.addEventListener('click', () => {
-            const userMessage = textarea.value.trim();
-            if (userMessage !== '') {
-                Log.debug('User sent message: ' + userMessage);
-                displayMessage(userMessage, 'user');
-                sendMessageToOllama(userMessage);
-                textarea.value = '';
             }
-        });
 
-        textarea.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                sendButton.click();
-            }
-        });
-    });
-};
+            sendButton.addEventListener('click', sendMessage);
+            textarea.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+    };
+});
