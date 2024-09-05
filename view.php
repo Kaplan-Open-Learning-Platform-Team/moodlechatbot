@@ -78,7 +78,7 @@ echo $OUTPUT->render_from_template('mod_moodlechatbot/chat_interface', $template
 
 $PAGE->requires->js_call_amd('mod_moodlechatbot/chat', 'init', [$chatid]);
 
-echo $OUTPUT->footer();<?php
+echo $OUTPUT->footer();
 // This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
