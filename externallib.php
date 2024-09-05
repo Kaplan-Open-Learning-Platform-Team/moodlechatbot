@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,10 +12,10 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Moodle Chatbot external lib functions
+ * Moodle Chatbot external lib
  *
  * @package    mod_moodlechatbot
  * @category   external
@@ -35,24 +35,33 @@ class mod_moodlechatbot_external extends external_api {
      */
     public static function send_message_parameters() {
         return new external_function_parameters(
-            array('message' => new external_value(PARAM_TEXT, 'The message sent by the user'))
+            array(
+                'message' => new external_value(PARAM_TEXT, 'The message to send')
+            )
         );
     }
 
     /**
-     * Send a message and get a response
-     * 
-     * @param string $message The message sent by the user
-     * @return array The response from the chatbot
+     * Sends a message to the chatbot and returns the response
+     * @param string $message The message to send
+     * @return array with status and message
      */
     public static function send_message($message) {
         global $USER;
 
+        // Parameter validation
         $params = self::validate_parameters(self::send_message_parameters(), array('message' => $message));
 
-        // Here you would typically integrate with Groq or any AI service
-        // For this example, we'll just echo back a simple response
-        $response = "You said: " . $params['message'] . ". This is a placeholder response from the chat bot.";
+        // Context validation
+        $context = context_system::instance();
+        self::validate_context($context);
+
+        // Capability checking
+        require_capability('mod/moodlechatbot:interact', $context);
+
+        // TODO: Implement actual chatbot logic here
+        // For now, we'll just echo the message back
+        $response = "You said: " . $params['message'];
 
         return array(
             'status' => 'success',
