@@ -26,35 +26,38 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    
-    // Add a setting for the Groq API key.
+    // API Key setting
     $settings->add(new admin_setting_configtext(
-        'mod_moodlechatbot/groq_api_key',
-        get_string('groq_api_key', 'mod_moodlechatbot'),
-        get_string('groq_api_key_desc', 'mod_moodlechatbot'),
+        'mod_moodlechatbot/apikey',
+        get_string('apikey', 'mod_moodlechatbot'),
+        get_string('apikey_desc', 'mod_moodlechatbot'),
         '',  // default value
         PARAM_TEXT
     ));
 
-    // Add a setting for the AI model to use.
-    $settings->add(new admin_setting_configselect(
-        'mod_moodlechatbot/ai_model',
-        get_string('ai_model', 'mod_moodlechatbot'),
-        get_string('ai_model_desc', 'mod_moodlechatbot'),
-        'mixtral-8x7b-32768',  // default value
-        array(
-            'mixtral-8x7b-32768' => 'Mixtral 8x7B',
-            'llama2-70b-4096' => 'LLaMA2 70B',
-            // Add more models as needed
-        )
+    // Maximum response length setting
+    $settings->add(new admin_setting_configtext(
+        'mod_moodlechatbot/maxresponselength',
+        get_string('maxresponselength', 'mod_moodlechatbot'),
+        get_string('maxresponselength_desc', 'mod_moodlechatbot'),
+        '500',  // default value
+        PARAM_INT
     ));
 
-    // Add a setting for maximum response tokens.
+    // Enable logging setting
+    $settings->add(new admin_setting_configcheckbox(
+        'mod_moodlechatbot/enablelogging',
+        get_string('enablelogging', 'mod_moodlechatbot'),
+        get_string('enablelogging_desc', 'mod_moodlechatbot'),
+        0  // default to disabled
+    ));
+
+    // Bot name setting
     $settings->add(new admin_setting_configtext(
-        'mod_moodlechatbot/max_tokens',
-        get_string('max_tokens', 'mod_moodlechatbot'),
-        get_string('max_tokens_desc', 'mod_moodlechatbot'),
-        '1000',  // default value
-        PARAM_INT
+        'mod_moodlechatbot/botname',
+        get_string('botname', 'mod_moodlechatbot'),
+        get_string('botname_desc', 'mod_moodlechatbot'),
+        get_string('defaultbotname', 'mod_moodlechatbot'),
+        PARAM_TEXT
     ));
 }
