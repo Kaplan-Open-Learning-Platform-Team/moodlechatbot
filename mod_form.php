@@ -58,7 +58,24 @@ class mod_moodlechatbot_mod_form extends moodleform_mod {
         $mform->addHelpButton('name', 'moodlechatbotname', 'mod_moodlechatbot');
 
         // Adding the standard "intro" and "introformat" fields.
-        $this->standard_intro_elements();
+        if ($CFG->branch >= 29) {
+            $this->standard_intro_elements();
+        } else {
+            $this->add_intro_editor();
+        }
+
+        // Adding the rest of mod_moodlechatbot settings, spreading all them into this fieldset
+        // or adding more fieldsets ('header' elements) if needed for better logic.
+        $mform->addElement('static', 'label1', 'moodlechatbotsettings', get_string('moodlechatbotsettings', 'mod_moodlechatbot'));
+
+        $mform->addElement('header', 'moodlechatbotfieldset', get_string('moodlechatbotfieldset', 'mod_moodlechatbot'));
+
+        // Add custom fields here.
+        // For example, if you want to add a field for the maximum number of messages:
+        $mform->addElement('text', 'maxmessages', get_string('maxmessages', 'mod_moodlechatbot'), array('size' => '4'));
+        $mform->setType('maxmessages', PARAM_INT);
+        $mform->setDefault('maxmessages', 50); // Set a default value
+        $mform->addHelpButton('maxmessages', 'maxmessages', 'mod_moodlechatbot');
 
         // Add standard grading elements.
         $this->standard_grading_coursemodule_elements();
