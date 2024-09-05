@@ -1,26 +1,7 @@
-<div class="mod_moodlechatbot_message {{#isbot}}mod_moodlechatbot_bot{{/isbot}}" data-id="{{id}}">
-    <div class="mod_moodlechatbot_message_content">
-        {{#isbot}}
-            <div class="mod_moodlechatbot_bot_icon">
-                <i class="fa fa-robot" aria-hidden="true"></i>
-            </div>
-        {{/isbot}}
-        {{^isbot}}
-            <div class="mod_moodlechatbot_user_icon">
-                <i class="fa fa-user" aria-hidden="true"></i>
-            </div>
-        {{/isbot}}
-        <div class="mod_moodlechatbot_message_text">
-            {{{message}}}
-        </div>
-    </div>
-    <div class="mod_moodlechatbot_message_info">
-        {{#isbot}}
-            <span class="mod_moodlechatbot_sender">{{#str}}botname, mod_moodlechatbot{{/str}}</span>
-        {{/isbot}}
-        {{^isbot}}
-            <span class="mod_moodlechatbot_sender">{{#str}}you, mod_moodlechatbot{{/str}}</span>
-        {{/isbot}}
-        <span class="mod_moodlechatbot_time">{{timecreated}}</span>
+<div id="{{chatid}}" class="mod_moodlechatbot_chat" data-chatbotid="{{chatbotid}}">
+    <div data-region="messages"></div>
+    <div class="mod_moodlechatbot_input">
+        <textarea data-region="input" placeholder="{{placeholder}}" rows="3"></textarea>
+        <button data-action="send" class="btn btn-primary">{{sendlabel}}</button>
     </div>
 </div>

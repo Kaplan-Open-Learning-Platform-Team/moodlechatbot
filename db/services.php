@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
+// This file is part of Moodle - http://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,7 +12,7 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
  * Moodle Chatbot external functions and service definitions.
@@ -29,7 +29,7 @@ $functions = array(
     'mod_moodlechatbot_send_message' => array(
         'classname'   => 'mod_moodlechatbot_external',
         'methodname'  => 'send_message',
-        'classpath'   => 'mod/moodlechatbot/externallib.php',
+        'classpath'   => 'mod/moodlechatbot/classes/external.php',
         'description' => 'Send a message to the chatbot and get a response',
         'type'        => 'write',
         'ajax'        => true,
