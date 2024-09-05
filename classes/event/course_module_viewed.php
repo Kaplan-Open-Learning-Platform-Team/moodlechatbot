@@ -51,7 +51,7 @@ class course_module_viewed extends \core\event\course_module_viewed {
      *
      * @return \moodle_url
      */
-    public static function get_url() {
+    public function get_url() {
         return new \moodle_url('/mod/moodlechatbot/view.php', array('id' => $this->contextinstanceid));
     }
 
