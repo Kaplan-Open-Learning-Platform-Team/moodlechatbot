@@ -66,12 +66,15 @@
 
 /* Assistant message styling (now on the left) */
 .assistant {
-    background-color: #e6f7ff;
+    background-color: #f9f9f9;
     color: #000;
     text-align: left;
     float: left;
     clear: both;
-    border-radius: 15px 15px 15px 0;
+    padding: 15px; /* Add some padding for better visual separation */
+    margin: 10px; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Add a subtle shadow */
+    border-radius: 8px; /* Slightly rounded corners */
 }
 
 /* Clear floats after each message */
