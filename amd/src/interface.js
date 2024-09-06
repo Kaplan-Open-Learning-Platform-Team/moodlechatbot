@@ -20,6 +20,27 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to the bottom
         };
 
+        const getEnrolledCourses = () => {
+            // Call the AJAX function to get courses
+            Ajax.call([{
+                methodname: 'mod_moodlechatbot_get_enrolled_courses',
+                args: {}, // No arguments needed, as the PHP function gets current user automatically
+            }])[0].done(function(courses) {
+                if (courses.length > 0) {
+                    let courseList = 'You are currently enrolled in the following courses:\n';
+                    courses.forEach(course => {
+                        courseList += '- ' + course.fullname + '\n';
+                    });
+                    appendMessage('assistant', courseList);
+                } else {
+                    appendMessage('assistant', 'You are not enrolled in any courses.');
+                }
+            }).fail(function(error) {
+                appendMessage('assistant', 'Sorry, I could not fetch your enrolled courses.');
+                Log.error('AJAX call failed: ', error);
+            });
+        };
+
         // Function to send the user input to the API using fetch
         const sendMessage = () => {
             const userInput = textarea.value.trim();
