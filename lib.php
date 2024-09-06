@@ -95,3 +95,35 @@ function moodlechatbot_delete_instance($id) {
 
     return true;
 }
+
+/**
+ * Fetches a list of courses that the specified user is currently enrolled in.
+ *
+ * This function retrieves all courses in which the provided user ID is enrolled.
+ * It uses Moodle's core function enrol_get_users_courses() to ensure that only courses
+ * the user is permitted to view are returned. The courses are sorted by visibility and
+ * sort order.
+ *
+ * @param int $userid The ID of the user whose enrolled courses are to be fetched.
+ * @return array List of courses the user is enrolled in. Each course entry contains:
+ *   - id: The course ID.
+ *   - fullname: The full name of the course.
+ */
+function mod_moodlechatbot_get_enrolled_courses($userid) {
+    global $DB;
+
+    // Get courses where the user is enrolled.
+    $courses = enrol_get_users_courses($userid, true, null, 'visible DESC, sortorder ASC');
+
+    // Prepare an array to return course names and IDs.
+    $courselist = array();
+    foreach ($courses as $course) {
+        $courselist[] = array(
+            'id' => $course->id,
+            'fullname' => $course->fullname
+        );
+    }
+
+    return $courselist;
+}
+
