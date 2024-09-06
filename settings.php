@@ -63,4 +63,11 @@ if ($ADMIN->fulltree) {
         get_string('enablelogging_desc', 'mod_moodlechatbot'),
         0
     ));
+    
+    $settings->add(new admin_setting_configcheckbox(
+    'mod_moodlechatbot/enabletools',
+    get_string('enabletools', 'mod_moodlechatbot'),
+    get_string('enabletools_desc', 'mod_moodlechatbot'),
+    0
+    ));
 }

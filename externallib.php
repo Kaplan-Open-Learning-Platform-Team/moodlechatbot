@@ -66,12 +66,50 @@ class mod_moodlechatbot_external extends external_api {
         require_capability('mod/moodlechatbot:use', $context);
 
         $apiKey = get_config('mod_moodlechatbot', 'apikey');
+        $enableTools = get_config('mod_moodlechatbot', 'enabletools');
 
         if (empty($apiKey)) {
             throw new moodle_exception('apikeyerror', 'mod_moodlechatbot');
         }
 
         $apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
+
+        // Define tools
+        $tools = [
+            [
+                'type' => 'function',
+                'function' => [
+                    'name' => 'get_course_info',
+                    'description' => 'Get information about a specific course',
+                    'parameters' => [
+                        'type' => 'object',
+                        'properties' => [
+                            'course_id' => [
+                                'type' => 'integer',
+                                'description' => 'The ID of the course',
+                            ],
+                        ],
+                        'required' => ['course_id'],
+                    ],
+                ],
+            ],
+            // Add more tools as needed
+        ];
+
+        $postFields = [
+            'model' => 'llama3-groq-70b-8192-tool-use-preview',
+            'messages' => [
+                ['role' => 'system', 'content' => 'You are a helpful assistant in a Moodle learning environment.'],
+                ['role' => 'user', 'content' => $params['message']]
+            ],
+            'max_tokens' => 150,
+            'temperature' => 0.7
+        ];
+
+        if ($enableTools) {
+            $postFields['tools'] = $tools;
+            $postFields['tool_choice'] = 'auto';
+        }
 
         $ch = curl_init($apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -80,15 +118,7 @@ class mod_moodlechatbot_external extends external_api {
             'Content-Type: application/json',
             'Authorization: Bearer ' . $apiKey
         ]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-            'model' => 'llama3-70b-8192',
-            'messages' => [
-                ['role' => 'system', 'content' => 'You are a helpful assistant in a Moodle learning environment.'],
-                ['role' => 'user', 'content' => $params['message']]
-            ],
-            'max_tokens' => 150,
-            'temperature' => 0.7
-        ]));
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postFields));
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
@@ -107,6 +137,50 @@ class mod_moodlechatbot_external extends external_api {
             throw new moodle_exception('invalidresponse', 'mod_moodlechatbot');
         }
 
-        return $data['choices'][0]['message']['content'];
+        $botResponse = $data['choices'][0]['message']['content'];
+
+        // Check if the bot wants to use a tool
+        if ($enableTools && isset($data['choices'][0]['message']['tool_calls'])) {
+            $toolCalls = $data['choices'][0]['message']['tool_calls'];
+            foreach ($toolCalls as $toolCall) {
+                $functionName = $toolCall['function']['name'];
+                $functionArgs = json_decode($toolCall['function']['arguments'], true);
+                
+                // Execute the tool function
+                $toolResult = self::execute_tool($functionName, $functionArgs);
+
+                // Append the tool result to the conversation
+                $botResponse .= "\n\nTool Result: " . $toolResult;
+            }
+        }
+
+        return $botResponse;
+    }
+
+    /**
+     * Execute a tool function
+     * @param string $functionName The name of the function to execute
+     * @param array $args The arguments for the function
+     * @return string The result of the tool execution
+     */
+    private static function execute_tool($functionName, $args) {
+        switch ($functionName) {
+            case 'get_course_info':
+                return self::get_course_info($args['course_id']);
+            // Add cases for other tools as needed
+            default:
+                return "Unknown tool: $functionName";
+        }
+    }
+
+    /**
+     * Get course information
+     * @param int $courseId The ID of the course
+     * @return string Course information
+     */
+    private static function get_course_info($courseId) {
+        global $DB;
+        $course = $DB->get_record('course', array('id' => $courseId), '*', MUST_EXIST);
+        return "Course Name: {$course->fullname}, Short Name: {$course->shortname}, Start Date: " . userdate($course->startdate);
     }
 }

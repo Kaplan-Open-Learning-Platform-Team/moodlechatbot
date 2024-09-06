@@ -57,3 +57,10 @@
     align-self: flex-start;
     margin-right: auto;
 }
+
+.tool-message {
+    background-color: #e6f7ff;
+    align-self: flex-start;
+    margin-right: auto;
+    font-style: italic;
+}

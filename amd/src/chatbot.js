@@ -19,7 +19,7 @@ const Selectors = {
 /**
  * Add a message to the chat interface.
  *
- * @param {string} sender The sender of the message ('user' or 'bot').
+ * @param {string} sender The sender of the message ('user', 'bot', or 'tool').
  * @param {string} message The message content.
  */
 const addMessageToChat = (sender, message) => {
@@ -61,7 +61,12 @@ const sendMessage = () => {
 
         getBotResponse(userMessage)
         .then(response => {
-            addMessageToChat('bot', response);
+            // Split the response if it contains a tool result
+            const [botMessage, toolResult] = response.split('\n\nTool Result: ');
+            addMessageToChat('bot', botMessage);
+            if (toolResult) {
+                addMessageToChat('tool', `Tool Result: ${toolResult}`);
+            }
         });
     }
 };
