@@ -3,7 +3,8 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
     // Initialize function to bind events and set up the chatbot
     const init = (userId) => {
-        Log.debug('Current User ID:', userId);  
+        // Log the userId to ensure it's being passed correctly
+        Log.debug('Current User ID:', userId);  // Use 'Log' instead of 'log'
         Log.debug('Chatbot module initialized');
 
         const sendButton = document.getElementById("moodlechatbot-send");
@@ -19,16 +20,16 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to the bottom
         };
 
-        // Function to get enrolled courses via AJAX
+        // Function to get enrolled courses
         const getEnrolledCourses = () => {
             Ajax.call([{
-                methodname: 'mod_moodlechatbot_get_enrolled_courses',  // Registered in services.php
+                methodname: 'mod_moodlechatbot_get_enrolled_courses', // Method registered in services.php
                 args: {}
-            }]).done(function(courses) {
+            }])[0].done(function(courses) {
                 if (courses.length > 0) {
                     let courseList = 'You are currently enrolled in the following courses:\n';
                     courses.forEach(course => {
-                        courseList += `- ${course.fullname}\n`;
+                        courseList += '- ' + course.fullname + '\n';
                     });
                     appendMessage('assistant', courseList);
                 } else {
@@ -40,7 +41,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             });
         };
 
-        // Function to send the user input to the chatbot API using fetch
+        // Function to send the user input to the API using fetch
         const sendMessage = () => {
             const userInput = textarea.value.trim();
 
@@ -61,7 +62,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 return; // Stop further processing if it's a course enrollment query
             }
 
-            // Prepare the data to send to the external chatbot API (if it's not a course query)
+            // Prepare the data to send to the API (if it's not a course query)
             const payload = {
                 model: "gemma:2b",
                 messages: [
@@ -73,7 +74,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 stream: false
             };
 
-            // Make the AJAX request using fetch for chatbot model
+            // Make the AJAX request using fetch (if it's not a course query)
             fetch("http://192.168.0.102:11434/api/chat", { 
                 method: 'POST',
                 headers: {
