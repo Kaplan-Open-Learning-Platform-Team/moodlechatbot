@@ -34,7 +34,7 @@ $string['moodlechatbotsettings'] = 'Moodle Chat Bot Settings';
 $string['moodlechatbotfieldset'] = 'Chat Bot Settings';
 $string['moodlechatbotname_help'] = 'Moodle Chat Bot Name Help';
 
-// New strings for settings
+// Settings strings
 $string['apikey'] = 'API Key';
 $string['apikey_desc'] = 'Enter the API key for the chat bot service.';
 $string['apisecret'] = 'API Secret';
@@ -48,5 +48,8 @@ $string['maxmessages_desc'] = 'Enter the maximum number of messages to display i
 $string['enablelogging'] = 'Enable Logging';
 $string['enablelogging_desc'] = 'Enable or disable logging for the chat bot.';
 
-// Error message
+// Error messages
 $string['error'] = 'An error occurred. Please try again later.';
+$string['apierror'] = 'API Error (HTTP code: {$a}). Please contact the administrator.';
+$string['apicredentialsmissing'] = 'API credentials are missing. Please check the plugin settings.';
+$string['invalidresponse'] = 'Invalid response received from the API.';

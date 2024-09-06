@@ -65,8 +65,13 @@ class mod_moodlechatbot_external extends external_api {
         // Capability check
         require_capability('mod/moodlechatbot:use', $context);
 
-        // TODO: Replace with actual Groq API key from plugin settings
-        $apiKey = get_config('mod_moodlechatbot', 'groq_api_key');
+        $apiKey = get_config('mod_moodlechatbot', 'apikey');
+        $apiSecret = get_config('mod_moodlechatbot', 'apisecret');
+
+        if (empty($apiKey) || empty($apiSecret)) {
+            throw new moodle_exception('apicredentialsmissing', 'mod_moodlechatbot');
+        }
+
         $apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
         $ch = curl_init($apiUrl);
@@ -91,10 +96,18 @@ class mod_moodlechatbot_external extends external_api {
         curl_close($ch);
 
         if ($httpCode !== 200) {
-            throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $httpCode);
+            $errorMessage = 'API Error';
+            if ($httpCode === 401) {
+                $errorMessage = 'API authentication failed. Please check your API credentials.';
+            }
+            throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $httpCode, $errorMessage);
         }
 
         $data = json_decode($response, true);
+        if (!isset($data['choices'][0]['message']['content'])) {
+            throw new moodle_exception('invalidresponse', 'mod_moodlechatbot');
+        }
+
         return $data['choices'][0]['message']['content'];
     }
 }
