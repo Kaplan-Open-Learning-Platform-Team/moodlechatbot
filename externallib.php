@@ -4,6 +4,7 @@ require_once($CFG->dirroot.'/mod/moodlechatbot/lib.php');
 defined('MOODLE_INTERNAL') || die();
 
 require_once("$CFG->libdir/externallib.php");
+require_once($CFG->dirroot.'/mod/moodlechatbot/lib.php'); // Include lib.php
 
 class mod_moodlechatbot_external extends external_api {
     public static function get_enrolled_courses_parameters() {
