@@ -7,5 +7,6 @@ $functions = array(
         'description' => 'Returns a list of courses the current user is enrolled in.',
         'type'        => 'read',
         'ajax'        => true,
+        'classpath'   => 'mod/moodlechatbot/ajax_courses.php', // Updated path
     ),
 );
