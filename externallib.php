@@ -81,7 +81,7 @@ class mod_moodlechatbot_external extends external_api {
             'Authorization: Bearer ' . $apiKey
         ]);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-            'model' => 'mixtral-8x7b-32768',
+            'model' => 'llama3-70b-8192',
             'messages' => [
                 ['role' => 'system', 'content' => 'You are a helpful assistant in a Moodle learning environment.'],
                 ['role' => 'user', 'content' => $params['message']]
