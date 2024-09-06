@@ -122,6 +122,10 @@ class mod_moodlechatbot_external extends external_api {
 
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        
+        // Log raw API response for debugging
+        debugging('Raw API response: ' . $response, DEBUG_DEVELOPER);
+        
         curl_close($ch);
 
         if ($httpCode !== 200) {
@@ -133,8 +137,21 @@ class mod_moodlechatbot_external extends external_api {
         }
 
         $data = json_decode($response, true);
-        if (!isset($data['choices'][0]['message']['content'])) {
+        
+        // Improved error handling and debugging
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            debugging('JSON decode error: ' . json_last_error_msg(), DEBUG_DEVELOPER);
+            throw new moodle_exception('invalidjson', 'mod_moodlechatbot');
+        }
+
+        if (!isset($data['choices']) || !is_array($data['choices']) || empty($data['choices'])) {
+            debugging('Unexpected API response structure: ' . print_r($data, true), DEBUG_DEVELOPER);
             throw new moodle_exception('invalidresponse', 'mod_moodlechatbot');
+        }
+
+        if (!isset($data['choices'][0]['message']['content'])) {
+            debugging('Missing content in API response: ' . print_r($data['choices'][0], true), DEBUG_DEVELOPER);
+            throw new moodle_exception('missingcontent', 'mod_moodlechatbot');
         }
 
         $botResponse = $data['choices'][0]['message']['content'];

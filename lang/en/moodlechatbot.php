@@ -45,14 +45,17 @@ $string['maxmessages'] = 'Maximum Messages';
 $string['maxmessages_desc'] = 'Enter the maximum number of messages to display in the chat history.';
 $string['enablelogging'] = 'Enable Logging';
 $string['enablelogging_desc'] = 'Enable or disable logging for the chat bot.';
+$string['enabletools'] = 'Enable Tools';
+$string['enabletools_desc'] = 'Enable or disable the use of tools by the chat bot.';
 
 // Error messages
 $string['error'] = 'An error occurred. Please try again later.';
 $string['apierror'] = 'API Error (HTTP code: {$a}). Please contact the administrator.';
 $string['apikeyerror'] = 'API authentication failed. Please check your Groq API key in the plugin settings.';
-$string['invalidresponse'] = 'Invalid response received from the API.';
-// tool language strings
+$string['invalidresponse'] = 'Invalid or unexpected response structure from API';
+$string['invalidjson'] = 'Error decoding JSON response from API';
+$string['missingcontent'] = 'Missing content in API response';
+
+// Tool-related strings
 $string['tool_result'] = 'Tool Result';
 $string['course_info'] = 'Course Information';
-$string['enabletools'] = 'Enable Tools';
-$string['enabletools_desc'] = 'Enable or disable the use of tools by the chat bot.';
