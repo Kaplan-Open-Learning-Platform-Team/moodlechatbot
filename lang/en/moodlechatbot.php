@@ -33,3 +33,20 @@ $string['moodlechatbotname'] = 'Moodle Chat Bot';
 $string['moodlechatbotsettings'] = 'Moodle Chat Bot Settings';
 $string['moodlechatbotfieldset'] = 'Chat Bot Settings';
 $string['moodlechatbotname_help'] = 'Moodle Chat Bot Name Help';
+
+// New strings for settings
+$string['apikey'] = 'API Key';
+$string['apikey_desc'] = 'Enter the API key for the chat bot service.';
+$string['apisecret'] = 'API Secret';
+$string['apisecret_desc'] = 'Enter the API secret for the chat bot service.';
+$string['defaultbotname'] = 'Default Bot Name';
+$string['defaultbotname_desc'] = 'Enter the default name for the chat bot.';
+$string['defaultwelcomemessage'] = 'Default Welcome Message';
+$string['defaultwelcomemessage_desc'] = 'Enter the default welcome message for the chat bot.';
+$string['maxmessages'] = 'Maximum Messages';
+$string['maxmessages_desc'] = 'Enter the maximum number of messages to display in the chat history.';
+$string['enablelogging'] = 'Enable Logging';
+$string['enablelogging_desc'] = 'Enable or disable logging for the chat bot.';
+
+// Error message
+$string['error'] = 'An error occurred. Please try again later.';

@@ -19,63 +19,56 @@
  *
  * @package     mod_moodlechatbot
  * @category    admin
- * @copyright   2024 Your Name <your@email.com>
+ * @copyright   2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    // API Key setting
     $settings->add(new admin_setting_configtext(
         'mod_moodlechatbot/apikey',
         get_string('apikey', 'mod_moodlechatbot'),
         get_string('apikey_desc', 'mod_moodlechatbot'),
-        '',  // default value
+        '',
         PARAM_TEXT
     ));
 
-    // API Secret setting
     $settings->add(new admin_setting_configpasswordunmask(
         'mod_moodlechatbot/apisecret',
         get_string('apisecret', 'mod_moodlechatbot'),
         get_string('apisecret_desc', 'mod_moodlechatbot'),
-        '',  // default value
-        PARAM_TEXT
+        ''
     ));
 
-    // Default Bot Name setting
     $settings->add(new admin_setting_configtext(
         'mod_moodlechatbot/defaultbotname',
         get_string('defaultbotname', 'mod_moodlechatbot'),
         get_string('defaultbotname_desc', 'mod_moodlechatbot'),
-        get_string('defaultbotname', 'mod_moodlechatbot'),  // default value
+        get_string('defaultbotname', 'mod_moodlechatbot'),
         PARAM_TEXT
     ));
 
-    // Default Welcome Message setting
     $settings->add(new admin_setting_configtextarea(
         'mod_moodlechatbot/defaultwelcomemessage',
         get_string('defaultwelcomemessage', 'mod_moodlechatbot'),
         get_string('defaultwelcomemessage_desc', 'mod_moodlechatbot'),
-        get_string('defaultwelcomemessage', 'mod_moodlechatbot'),  // default value
+        get_string('defaultwelcomemessage', 'mod_moodlechatbot'),
         PARAM_TEXT
     ));
 
-    // Maximum Messages setting
     $settings->add(new admin_setting_configtext(
         'mod_moodlechatbot/maxmessages',
         get_string('maxmessages', 'mod_moodlechatbot'),
         get_string('maxmessages_desc', 'mod_moodlechatbot'),
-        100,  // default value
+        50,
         PARAM_INT
     ));
 
-    // Enable Logging setting
     $settings->add(new admin_setting_configcheckbox(
         'mod_moodlechatbot/enablelogging',
         get_string('enablelogging', 'mod_moodlechatbot'),
         get_string('enablelogging_desc', 'mod_moodlechatbot'),
-        0  // default to disabled
+        0
     ));
 }
