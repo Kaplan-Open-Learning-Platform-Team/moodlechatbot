@@ -1,0 +1,21 @@
+<div class="mod_moodlechatbot_message {{#isbot}}mod_moodlechatbot_bot_message{{/isbot}}{{^isbot}}mod_moodlechatbot_user_message{{/isbot}}" data-message-id="{{id}}">
+    <div class="mod_moodlechatbot_message_content">
+        {{#isbot}}
+            <div class="mod_moodlechatbot_bot_icon">
+                <i class="icon fa fa-robot fa-fw" aria-hidden="true"></i>
+            </div>
+        {{/isbot}}
+        {{^isbot}}
+            <div class="mod_moodlechatbot_user_icon">
+                <i class="icon fa fa-user fa-fw" aria-hidden="true"></i>
+            </div>
+        {{/isbot}}
+        <div class="mod_moodlechatbot_message_text">
+            {{{content}}}
+        </div>
+    </div>
+    <div class="mod_moodlechatbot_message_info">
+        <span class="mod_moodlechatbot_message_sender">{{sender}}</span>
+        <span class="mod_moodlechatbot_message_timestamp">{{timestamp}}</span>
+    </div>
+</div>

@@ -1,3 +1,20 @@
-<div class="message {{#isbot}}bot-message{{/isbot}}{{^isbot}}user-message{{/isbot}}">
-    <strong>{{sender}}:</strong> {{{content}}}
+<div id="mod_moodlechatbot_chat_{{uniqid}}" class="mod_moodlechatbot_chat" data-chatbotid="{{chatbotid}}">
+    <div class="mod_moodlechatbot_messages" data-region="messages">
+        {{#messages}}
+            {{> mod_moodlechatbot/message}}
+        {{/messages}}
+    </div>
+    <div class="mod_moodlechatbot_input">
+        <textarea name="message" rows="3" data-region="input" 
+                  placeholder="{{inputplaceholder}}"></textarea>
+        <button type="button" class="btn btn-primary" data-action="send">
+            {{sendlabel}}
+        </button>
+    </div>
 </div>
+
+{{#js}}
+require(['mod_moodlechatbot/chat'], function(Chat) {
+    Chat.init('#mod_moodlechatbot_chat_{{uniqid}}');
+});
+{{/js}}

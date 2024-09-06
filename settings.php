@@ -35,29 +35,47 @@ if ($ADMIN->fulltree) {
         PARAM_TEXT
     ));
 
-    // Maximum response length setting
+    // API Secret setting
+    $settings->add(new admin_setting_configpasswordunmask(
+        'mod_moodlechatbot/apisecret',
+        get_string('apisecret', 'mod_moodlechatbot'),
+        get_string('apisecret_desc', 'mod_moodlechatbot'),
+        '',  // default value
+        PARAM_TEXT
+    ));
+
+    // Default Bot Name setting
     $settings->add(new admin_setting_configtext(
-        'mod_moodlechatbot/maxresponselength',
-        get_string('maxresponselength', 'mod_moodlechatbot'),
-        get_string('maxresponselength_desc', 'mod_moodlechatbot'),
-        '500',  // default value
+        'mod_moodlechatbot/defaultbotname',
+        get_string('defaultbotname', 'mod_moodlechatbot'),
+        get_string('defaultbotname_desc', 'mod_moodlechatbot'),
+        get_string('defaultbotname', 'mod_moodlechatbot'),  // default value
+        PARAM_TEXT
+    ));
+
+    // Default Welcome Message setting
+    $settings->add(new admin_setting_configtextarea(
+        'mod_moodlechatbot/defaultwelcomemessage',
+        get_string('defaultwelcomemessage', 'mod_moodlechatbot'),
+        get_string('defaultwelcomemessage_desc', 'mod_moodlechatbot'),
+        get_string('defaultwelcomemessage', 'mod_moodlechatbot'),  // default value
+        PARAM_TEXT
+    ));
+
+    // Maximum Messages setting
+    $settings->add(new admin_setting_configtext(
+        'mod_moodlechatbot/maxmessages',
+        get_string('maxmessages', 'mod_moodlechatbot'),
+        get_string('maxmessages_desc', 'mod_moodlechatbot'),
+        100,  // default value
         PARAM_INT
     ));
 
-    // Enable logging setting
+    // Enable Logging setting
     $settings->add(new admin_setting_configcheckbox(
         'mod_moodlechatbot/enablelogging',
         get_string('enablelogging', 'mod_moodlechatbot'),
         get_string('enablelogging_desc', 'mod_moodlechatbot'),
         0  // default to disabled
-    ));
-
-    // Bot name setting
-    $settings->add(new admin_setting_configtext(
-        'mod_moodlechatbot/botname',
-        get_string('botname', 'mod_moodlechatbot'),
-        get_string('botname_desc', 'mod_moodlechatbot'),
-        get_string('defaultbotname', 'mod_moodlechatbot'),
-        PARAM_TEXT
     ));
 }

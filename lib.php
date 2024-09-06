@@ -87,12 +87,15 @@ function moodlechatbot_update_instance($moodlechatbot, $mform = null) {
 function moodlechatbot_delete_instance($id) {
     global $DB;
 
-    $exists = $DB->get_record('moodlechatbot', array('id' => $id));
-    if (!$exists) {
+    $moodlechatbot = $DB->get_record('moodlechatbot', array('id' => $id));
+    if (!$moodlechatbot) {
         return false;
     }
 
-    $DB->delete_records('moodlechatbot', array('id' => $id));
+    // Delete any dependent records here.
+    $DB->delete_records('moodlechatbot_messages', array('chatbotid' => $moodlechatbot->id));
+
+    $DB->delete_records('moodlechatbot', array('id' => $moodlechatbot->id));
 
     return true;
 }
@@ -110,13 +113,43 @@ function moodlechatbot_get_file_areas($course, $cm, $context) {
 }
 
 /**
- * Custom function to generate a response from the chatbot.
+ * Serves the files from the mod_moodlechatbot file areas.
  *
- * @param string $message The user's message.
- * @return string The chatbot's response.
+ * @param stdClass $course The course object.
+ * @param stdClass $cm The course module object.
+ * @param stdClass $context The mod_moodlechatbot's context.
+ * @param string $filearea The name of the file area.
+ * @param array $args Extra arguments (itemid, path).
+ * @param bool $forcedownload Whether or not force download.
+ * @param array $options Additional options affecting the file serving.
+ * @return bool False if file not found, does not return if found - just send the file.
  */
-function moodlechatbot_generate_response($message) {
-    // TODO: Implement actual chatbot logic here.
-    // This is just a placeholder implementation.
-    return "You said: " . $message . ". This is a placeholder response from the chatbot.";
+function moodlechatbot_pluginfile($course, $cm, $context, $filearea, $args, $forcedownload, array $options=array()) {
+    // No files are associated with this plugin.
+    return false;
+}
+
+/**
+ * Extends the global navigation tree by adding mod_moodlechatbot nodes if there is a relevant content.
+ *
+ * This can be called by an AJAX request so do not rely on $PAGE as it might not be set up properly.
+ *
+ * @param navigation_node $moodlechatbotnode An object representing the navigation tree node.
+ * @param stdClass $course
+ * @param stdClass $module
+ * @param cm_info $cm
+ */
+function moodlechatbot_extend_navigation($moodlechatbotnode, $course, $module, $cm) {
+}
+
+/**
+ * Extends the settings navigation with the mod_moodlechatbot settings.
+ *
+ * This function is called when the context for the page is a mod_moodlechatbot module.
+ * This is not called by AJAX so it is safe to rely on the $PAGE.
+ *
+ * @param settings_navigation $settingsnav Complete settings navigation tree
+ * @param navigation_node $moodlechatbotnode mod_moodlechatbot administration node
+ */
+function moodlechatbot_extend_settings_navigation($settingsnav, $moodlechatbotnode = null) {
 }

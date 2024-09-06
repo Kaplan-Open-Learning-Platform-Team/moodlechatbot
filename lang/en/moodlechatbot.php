@@ -28,32 +28,48 @@ defined('MOODLE_INTERNAL') || die();
 $string['pluginname'] = 'Moodle Chat Bot';
 $string['modulename'] = 'Moodle Chat Bot';
 $string['modulenameplural'] = 'Moodle Chat Bots';
-$string['moodlechatbotname'] = 'Moodle Chat Bot Name';
-$string['moodlechatbotname_help'] = 'This is the name of the Moodle Chat Bot instance.';
-$string['moodlechatbotsettings'] = 'Moodle Chat Bot Settings';
+$string['moodlechatbotname'] = 'Chat Bot Name';
+$string['moodlechatbotname_help'] = 'This is the name of the chat bot activity instance that will appear on the course page.';
+$string['moodlechatbotsettings'] = 'Chat Bot Settings';
 $string['moodlechatbotfieldset'] = 'Custom example fieldset';
-$string['pluginadministration'] = 'Moodle Chat Bot Administration';
+
+// Mod form strings
+$string['botname'] = 'Bot Name';
+$string['botname_help'] = 'This is the name that will be displayed as the sender of bot messages in the chat.';
+$string['defaultbotname'] = 'Moodle Bot';
+$string['welcomemessage'] = 'Welcome Message';
+$string['welcomemessage_help'] = 'This message will be displayed when a user starts a new chat session.';
+$string['defaultwelcomemessage'] = 'Hello! How can I assist you today?';
+$string['maxmessages'] = 'Maximum Messages';
+$string['maxmessages_help'] = 'The maximum number of messages to display in the chat history.';
 
 // Chat interface strings
 $string['typemessage'] = 'Type your message here...';
 $string['send'] = 'Send';
-$string['botresponse'] = 'Bot Response';
+$string['loading'] = 'Loading...';
 
 // Error messages
-$string['errornomessage'] = 'Please enter a message.';
-$string['errorsendfailed'] = 'Failed to send message. Please try again.';
+$string['nomessages'] = 'No messages yet.';
+$string['errorsending'] = 'Error sending message. Please try again.';
 
 // Capability strings
 $string['moodlechatbot:addinstance'] = 'Add a new Moodle Chat Bot';
 $string['moodlechatbot:view'] = 'View Moodle Chat Bot';
 $string['moodlechatbot:interact'] = 'Interact with Moodle Chat Bot';
-
-// Settings strings
-$string['apikey'] = 'API Key';
-$string['apikey_desc'] = 'Enter the API key for the chat bot service.';
-$string['maxresponselength'] = 'Maximum Response Length';
-$string['maxresponselength_desc'] = 'The maximum number of characters in the bot\'s response.';
+$string['moodlechatbot:managemessages'] = 'Manage Moodle Chat Bot messages';
 
 // Event strings
-$string['eventmessagesent'] = 'Message sent';
-$string['eventresponsegenerated'] = 'Response generated';
+$string['eventmessagesent'] = 'Chat message sent';
+
+// Admin settings
+$string['apikey'] = 'API Key';
+$string['apikey_desc'] = 'Enter the API key for the chat bot service.';
+$string['apisecret'] = 'API Secret';
+$string['apisecret_desc'] = 'Enter the API secret for the chat bot service.';
+
+// Privacy API
+$string['privacy:metadata:moodlechatbot_messages'] = 'Information about the chat messages for Moodle Chat Bot activities';
+$string['privacy:metadata:moodlechatbot_messages:moodlechatbotid'] = 'The ID of the Moodle Chat Bot instance';
+$string['privacy:metadata:moodlechatbot_messages:userid'] = 'The ID of the user who sent the message';
+$string['privacy:metadata:moodlechatbot_messages:message'] = 'The content of the message';
+$string['privacy:metadata:moodlechatbot_messages:timecreated'] = 'The timestamp of when the message was created';

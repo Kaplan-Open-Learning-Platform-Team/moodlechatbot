@@ -33,6 +33,7 @@ $functions = array(
         'description' => 'Send a message to the chatbot and get a response',
         'type'        => 'write',
         'ajax'        => true,
+        'capabilities'=> 'mod/moodlechatbot:interact',
     ),
 );
 

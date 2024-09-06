@@ -1,5 +1,5 @@
 <?php
-// This file is part of Moodle - http://moodle.org/
+// This file is part of Moodle - https://moodle.org/
 //
 // Moodle is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -12,26 +12,21 @@
 // GNU General Public License for more details.
 //
 // You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * This file keeps track of upgrades to the moodlechatbot module
+ * Plugin upgrade steps are defined here.
  *
- * Sometimes, changes between versions involve alterations to database
- * structures and other major things that may break installations. The upgrade
- * function in this file will attempt to perform all the necessary actions to
- * upgrade your older installation to the current version. If there's something
- * it cannot do itself, it will tell you what you need to do.
- *
- * @package    mod_moodlechatbot
- * @copyright  2024 Your Name <your@email.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     mod_moodlechatbot
+ * @category    upgrade
+ * @copyright   2024 Your Name <your@email.com>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Execute moodlechatbot upgrade from the given old version
+ * Execute mod_moodlechatbot upgrade from the given old version.
  *
  * @param int $oldversion
  * @return bool
@@ -39,26 +34,54 @@ defined('MOODLE_INTERNAL') || die();
 function xmldb_moodlechatbot_upgrade($oldversion) {
     global $DB;
 
-    $dbman = $DB->get_manager(); // loads ddl manager and xmldb classes
+    $dbman = $DB->get_manager();
 
-    // Upgrade script starts here.
+    // For future upgrades, start the if statements from here.
 
-    if ($oldversion < 2024082901) {
-
-        // Define field chatbotname to be added to moodlechatbot.
+    // Upgrade step 1: Add 'botname' field to moodlechatbot table.
+    if ($oldversion < 2024010101) {
+        // Define field botname to be added to moodlechatbot.
         $table = new xmldb_table('moodlechatbot');
-        $field = new xmldb_field('chatbotname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, null, 'intro');
+        $field = new xmldb_field('botname', XMLDB_TYPE_CHAR, '255', null, XMLDB_NOTNULL, null, 'Moodle Bot', 'introformat');
 
-        // Conditionally launch add field chatbotname.
+        // Conditionally launch add field botname.
         if (!$dbman->field_exists($table, $field)) {
             $dbman->add_field($table, $field);
         }
 
         // Moodlechatbot savepoint reached.
-        upgrade_mod_savepoint(true, 2024082901, 'moodlechatbot');
+        upgrade_mod_savepoint(true, 2024010101, 'moodlechatbot');
     }
 
-    // Add more upgrade steps here as your plugin evolves.
+    // Upgrade step 2: Add 'welcomemessage' field to moodlechatbot table.
+    if ($oldversion < 2024010102) {
+        // Define field welcomemessage to be added to moodlechatbot.
+        $table = new xmldb_table('moodlechatbot');
+        $field = new xmldb_field('welcomemessage', XMLDB_TYPE_TEXT, null, null, null, null, null, 'botname');
+
+        // Conditionally launch add field welcomemessage.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Moodlechatbot savepoint reached.
+        upgrade_mod_savepoint(true, 2024010102, 'moodlechatbot');
+    }
+
+    // Upgrade step 3: Add 'maxmessages' field to moodlechatbot table.
+    if ($oldversion < 2024010103) {
+        // Define field maxmessages to be added to moodlechatbot.
+        $table = new xmldb_table('moodlechatbot');
+        $field = new xmldb_field('maxmessages', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, '100', 'welcomemessage');
+
+        // Conditionally launch add field maxmessages.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Moodlechatbot savepoint reached.
+        upgrade_mod_savepoint(true, 2024010103, 'moodlechatbot');
+    }
 
     return true;
 }

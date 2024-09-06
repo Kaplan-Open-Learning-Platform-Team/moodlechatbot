@@ -1,4 +1,4 @@
-/* Chat container */
+/* Main chat container */
 .mod_moodlechatbot_chat {
     max-width: 800px;
     margin: 20px auto;
@@ -20,21 +20,58 @@
 
 /* Individual message */
 .mod_moodlechatbot_message {
-    margin-bottom: 10px;
-    padding: 8px 12px;
+    margin-bottom: 15px;
+    display: flex;
+    flex-direction: column;
+}
+
+.mod_moodlechatbot_message_content {
+    display: flex;
+    align-items: flex-start;
+}
+
+.mod_moodlechatbot_message_text {
+    padding: 10px;
     border-radius: 18px;
     max-width: 70%;
-    clear: both;
 }
 
-.mod_moodlechatbot_message.user-message {
+.mod_moodlechatbot_user_message .mod_moodlechatbot_message_text {
     background-color: #dcf8c6;
-    float: right;
+    margin-left: auto;
 }
 
-.mod_moodlechatbot_message.bot-message {
+.mod_moodlechatbot_bot_message .mod_moodlechatbot_message_text {
     background-color: #e6e6e6;
-    float: left;
+}
+
+.mod_moodlechatbot_message_info {
+    font-size: 0.8em;
+    color: #888;
+    margin-top: 5px;
+}
+
+.mod_moodlechatbot_user_message .mod_moodlechatbot_message_info {
+    text-align: right;
+}
+
+/* Icons */
+.mod_moodlechatbot_bot_icon,
+.mod_moodlechatbot_user_icon {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color: #ddd;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-right: 10px;
+}
+
+.mod_moodlechatbot_user_icon {
+    margin-left: 10px;
+    margin-right: 0;
+    order: 1;
 }
 
 /* Input area */
@@ -75,7 +112,7 @@
         margin: 10px;
     }
 
-    .mod_moodlechatbot_message {
+    .mod_moodlechatbot_message_text {
         max-width: 85%;
     }
 }
