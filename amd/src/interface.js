@@ -75,7 +75,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             };
 
             // Make the AJAX request using fetch (if it's not a course query)
-            fetch("http://192.168.0.102:11434/api/chat", { 
+            fetch("http://192.168.0.102:11434/api/chat", {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
