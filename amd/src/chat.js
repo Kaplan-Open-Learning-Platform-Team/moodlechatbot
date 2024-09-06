@@ -32,7 +32,9 @@ export const init = (chatContainerSelector) => {
 
     const sendMessage = async () => {
         const message = inputArea.value.trim();
-        if (!message) return;
+        if (!message) {
+            return;
+        }
 
         inputArea.value = '';
         await appendMessage({
