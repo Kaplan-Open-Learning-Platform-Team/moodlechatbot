@@ -26,18 +26,10 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
-    $settings->add(new admin_setting_configtext(
+    $settings->add(new admin_setting_configpasswordunmask(
         'mod_moodlechatbot/apikey',
         get_string('apikey', 'mod_moodlechatbot'),
         get_string('apikey_desc', 'mod_moodlechatbot'),
-        '',
-        PARAM_TEXT
-    ));
-
-    $settings->add(new admin_setting_configpasswordunmask(
-        'mod_moodlechatbot/apisecret',
-        get_string('apisecret', 'mod_moodlechatbot'),
-        get_string('apisecret_desc', 'mod_moodlechatbot'),
         ''
     ));
 

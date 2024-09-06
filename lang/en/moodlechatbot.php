@@ -35,10 +35,8 @@ $string['moodlechatbotfieldset'] = 'Chat Bot Settings';
 $string['moodlechatbotname_help'] = 'Moodle Chat Bot Name Help';
 
 // Settings strings
-$string['apikey'] = 'API Key';
-$string['apikey_desc'] = 'Enter the API key for the chat bot service.';
-$string['apisecret'] = 'API Secret';
-$string['apisecret_desc'] = 'Enter the API secret for the chat bot service.';
+$string['apikey'] = 'Groq API Key';
+$string['apikey_desc'] = 'Enter the API key for the Groq chat bot service. This key is used for authentication and should be kept secret.';
 $string['defaultbotname'] = 'Default Bot Name';
 $string['defaultbotname_desc'] = 'Enter the default name for the chat bot.';
 $string['defaultwelcomemessage'] = 'Default Welcome Message';
@@ -51,5 +49,5 @@ $string['enablelogging_desc'] = 'Enable or disable logging for the chat bot.';
 // Error messages
 $string['error'] = 'An error occurred. Please try again later.';
 $string['apierror'] = 'API Error (HTTP code: {$a}). Please contact the administrator.';
-$string['apicredentialsmissing'] = 'API credentials are missing. Please check the plugin settings.';
+$string['apikeyerror'] = 'API authentication failed. Please check your Groq API key in the plugin settings.';
 $string['invalidresponse'] = 'Invalid response received from the API.';
