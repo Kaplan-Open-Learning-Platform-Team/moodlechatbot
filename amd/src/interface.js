@@ -37,14 +37,18 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 }
             }).fail(function(error) {
                 appendMessage('assistant', 'Sorry, I could not fetch your enrolled courses.');
-                Log.error('AJAX call failed: ', error);
-                if (error.backtrace) {
-                    Log.error('Error backtrace:', error.backtrace);
+                Log.error('AJAX call failed:', error);
+                if (error.exception) {
+                    Log.error('Exception:', error.exception);
+                }
+                if (error.message) {
+                    Log.error('Error message:', error.message);
                 }
                 if (error.debuginfo) {
                     Log.error('Debug info:', error.debuginfo);
                 }
             });
+
         };
 
         // Function to send the user input to the API using fetch
