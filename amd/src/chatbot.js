@@ -1,46 +1,91 @@
-define(['jquery', 'core/ajax'], function($, Ajax) {
-    return {
-        init: function() {
-            var messageContainer = $('#moodlechatbot-messages');
-            var inputTextarea = $('#moodlechatbot-textarea');
-            var sendButton = $('#moodlechatbot-send');
+import {call as fetchMany} from 'core/ajax';
+import {exception as displayException} from 'core/notification';
+import {getString} from 'core/str';
 
-            function addMessageToChat(sender, message) {
-                var messageElement = $('<div>').addClass('message ' + sender + '-message').text(message);
-                messageContainer.append(messageElement);
-                messageContainer.scrollTop(messageContainer[0].scrollHeight);
-            }
+/**
+ * Selectors used in this module.
+ *
+ * @type {Object}
+ */
+const Selectors = {
+    container: '#moodlechatbot-container',
+    messages: '#moodlechatbot-messages',
+    input: {
+        textarea: '#moodlechatbot-textarea',
+        send: '#moodlechatbot-send',
+    },
+};
 
-            function getBotResponse(userMessage) {
-                return Ajax.call([{
-                    methodname: 'mod_moodlechatbot_get_bot_response',
-                    args: { message: userMessage },
-                }])[0];
-            }
+/**
+ * Add a message to the chat interface.
+ *
+ * @param {string} sender The sender of the message ('user' or 'bot').
+ * @param {string} message The message content.
+ */
+const addMessageToChat = (sender, message) => {
+    const messagesContainer = document.querySelector(Selectors.messages);
+    const messageElement = document.createElement('div');
+    messageElement.classList.add('message', `${sender}-message`);
+    messageElement.textContent = message;
+    messagesContainer.appendChild(messageElement);
+    messagesContainer.scrollTop = messagesContainer.scrollHeight;
+};
 
-            function sendMessage() {
-                var userMessage = inputTextarea.val().trim();
-                if (userMessage) {
-                    addMessageToChat('user', userMessage);
-                    inputTextarea.val('');
-                    inputTextarea.css('height', 'auto');
+/**
+ * Fetch the bot's response from the server.
+ *
+ * @param {string} userMessage The user's message.
+ * @return {Promise}
+ */
+const getBotResponse = (userMessage) => {
+    return fetchMany([{
+        methodname: 'mod_moodlechatbot_get_bot_response',
+        args: {message: userMessage},
+    }])[0]
+    .catch(error => {
+        displayException(error);
+        return getString('error', 'mod_moodlechatbot');
+    });
+};
 
-                    getBotResponse(userMessage).then(function(response) {
-                        addMessageToChat('bot', response);
-                    }).catch(function(error) {
-                        console.error('Error getting bot response:', error);
-                        addMessageToChat('bot', 'Sorry, I encountered an error. Please try again later.');
-                    });
-                }
-            }
+/**
+ * Send a message and get the bot's response.
+ */
+const sendMessage = () => {
+    const textarea = document.querySelector(Selectors.input.textarea);
+    const userMessage = textarea.value.trim();
+    if (userMessage) {
+        addMessageToChat('user', userMessage);
+        textarea.value = '';
+        textarea.style.height = 'auto';
 
-            sendButton.on('click', sendMessage);
-            inputTextarea.on('keypress', function(e) {
-                if (e.which === 13 && !e.shiftKey) {
-                    e.preventDefault();
-                    sendMessage();
-                }
-            });
+        getBotResponse(userMessage)
+        .then(response => {
+            addMessageToChat('bot', response);
+        });
+    }
+};
+
+/**
+ * Initialize event listeners.
+ */
+const initEventListeners = () => {
+    const sendButton = document.querySelector(Selectors.input.send);
+    const textarea = document.querySelector(Selectors.input.textarea);
+
+    sendButton.addEventListener('click', sendMessage);
+
+    textarea.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
         }
-    };
-});
+    });
+};
+
+/**
+ * Initialize the chat bot.
+ */
+export const init = () => {
+    initEventListeners();
+};
