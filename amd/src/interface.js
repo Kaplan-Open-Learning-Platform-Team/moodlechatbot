@@ -35,7 +35,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 } else {
                     appendMessage('assistant', 'You are not enrolled in any courses.');
                 }
-            })..fail(function(error) {
+            }).fail(function(error) {
                 appendMessage('assistant', 'Sorry, I could not fetch your enrolled courses.');
                 Log.error('AJAX call failed: ', error);
                 if (error.backtrace) {
