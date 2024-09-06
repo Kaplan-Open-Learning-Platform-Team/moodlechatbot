@@ -18,7 +18,7 @@
  * Prints an instance of mod_moodlechatbot.
  *
  * @package     mod_moodlechatbot
- * @copyright   2024 Your Name <your@email.com>
+ * @copyright   2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -50,20 +50,17 @@ $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
+// Load the necessary JavaScript modules
+$PAGE->requires->js_call_amd('mod_moodlechatbot/chatbot', 'init');
+
 echo $OUTPUT->header();
 
-echo $OUTPUT->heading(format_string($moduleinstance->name));
-
-// Display a simple chat interface.
-echo html_writer::start_div('moodlechatbot-container');
-echo html_writer::div('', 'moodlechatbot-messages', array('id' => 'moodlechatbot-messages'));
-echo html_writer::start_div('moodlechatbot-input');
-echo html_writer::tag('textarea', '', array('id' => 'moodlechatbot-input', 'placeholder' => get_string('typemessage', 'mod_moodlechatbot')));
-echo html_writer::tag('button', get_string('send', 'mod_moodlechatbot'), array('id' => 'moodlechatbot-send'));
-echo html_writer::end_div();
-echo html_writer::end_div();
-
-// Include JavaScript for chat functionality.
-$PAGE->requires->js_call_amd('mod_moodlechatbot/chat', 'init');
+echo html_writer::start_tag('div', array('id' => 'moodlechatbot-container'));
+echo html_writer::tag('div', '', array('id' => 'moodlechatbot-messages'));
+echo html_writer::start_tag('div', array('id' => 'moodlechatbot-input'));
+echo html_writer::tag('textarea', '', array('id' => 'moodlechatbot-textarea', 'placeholder' => 'Type your message here...'));
+echo html_writer::tag('button', 'Send', array('id' => 'moodlechatbot-send'));
+echo html_writer::end_tag('div');
+echo html_writer::end_tag('div');
 
 echo $OUTPUT->footer();

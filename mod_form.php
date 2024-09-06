@@ -18,7 +18,7 @@
  * The main mod_moodlechatbot configuration form.
  *
  * @package     mod_moodlechatbot
- * @copyright   2024 Your Name <your@email.com>
+ * @copyright   2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -29,9 +29,9 @@ require_once($CFG->dirroot.'/course/moodleform_mod.php');
 /**
  * Module instance settings form.
  *
- * @package    mod_moodlechatbot
- * @copyright  2024 Your Name <your@email.com>
- * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @package     mod_moodlechatbot
+ * @copyright   2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class mod_moodlechatbot_mod_form extends moodleform_mod {
 
@@ -48,42 +48,33 @@ class mod_moodlechatbot_mod_form extends moodleform_mod {
 
         // Adding the standard "name" field.
         $mform->addElement('text', 'name', get_string('moodlechatbotname', 'mod_moodlechatbot'), array('size' => '64'));
+
         if (!empty($CFG->formatstringstriptags)) {
             $mform->setType('name', PARAM_TEXT);
         } else {
             $mform->setType('name', PARAM_CLEANHTML);
         }
+
         $mform->addRule('name', null, 'required', null, 'client');
         $mform->addRule('name', get_string('maximumchars', '', 255), 'maxlength', 255, 'client');
         $mform->addHelpButton('name', 'moodlechatbotname', 'mod_moodlechatbot');
 
         // Adding the standard "intro" and "introformat" fields.
-        $this->standard_intro_elements();
+        if ($CFG->branch >= 29) {
+            $this->standard_intro_elements();
+        } else {
+            $this->add_intro_editor();
+        }
 
         // Adding the rest of mod_moodlechatbot settings, spreading all them into this fieldset
-        // or adding more fieldsets ('header' elements) if needed for better logic.
+        // ... or adding more fieldsets ('header' elements) if needed for better logic.
+        $mform->addElement('static', 'label1', 'moodlechatbotsettings', get_string('moodlechatbotsettings', 'mod_moodlechatbot'));
         $mform->addElement('header', 'moodlechatbotfieldset', get_string('moodlechatbotfieldset', 'mod_moodlechatbot'));
 
-        // Add custom fields here.
-        $mform->addElement('text', 'botname', get_string('botname', 'mod_moodlechatbot'), array('size' => '64'));
-        $mform->setType('botname', PARAM_TEXT);
-        $mform->addHelpButton('botname', 'botname', 'mod_moodlechatbot');
-        $mform->setDefault('botname', get_string('defaultbotname', 'mod_moodlechatbot'));
-
-        $mform->addElement('text', 'welcomemessage', get_string('welcomemessage', 'mod_moodlechatbot'), array('size' => '64'));
-        $mform->setType('welcomemessage', PARAM_TEXT);
-        $mform->addHelpButton('welcomemessage', 'welcomemessage', 'mod_moodlechatbot');
-        $mform->setDefault('welcomemessage', get_string('defaultwelcomemessage', 'mod_moodlechatbot'));
-
-        $mform->addElement('text', 'maxmessages', get_string('maxmessages', 'mod_moodlechatbot'), array('size' => '5'));
-        $mform->setType('maxmessages', PARAM_INT);
-        $mform->addHelpButton('maxmessages', 'maxmessages', 'mod_moodlechatbot');
-        $mform->setDefault('maxmessages', 100);
-
-        // Add standard elements, common to all modules.
+        // Add standard elements.
         $this->standard_coursemodule_elements();
 
-        // Add standard buttons, common to all modules.
+        // Add standard buttons.
         $this->add_action_buttons();
     }
 }

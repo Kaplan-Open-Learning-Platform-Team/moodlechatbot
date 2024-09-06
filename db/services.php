@@ -15,32 +15,31 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Moodle Chatbot external functions and service definitions.
+ * Moodle Chat Bot external functions and service definitions.
  *
  * @package    mod_moodlechatbot
- * @category   external
- * @copyright  2024 Your Name <your@email.com>
+ * @category   webservice
+ * @copyright  2024 Kaplan Open Learning
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
 $functions = array(
-    'mod_moodlechatbot_send_message' => array(
+    'mod_moodlechatbot_get_bot_response' => array(
         'classname'   => 'mod_moodlechatbot_external',
-        'methodname'  => 'send_message',
+        'methodname'  => 'get_bot_response',
         'classpath'   => 'mod/moodlechatbot/externallib.php',
-        'description' => 'Send a message to the chatbot and get a response',
-        'type'        => 'write',
+        'description' => 'Get a response from the chat bot',
+        'type'        => 'read',
         'ajax'        => true,
-        'capabilities'=> 'mod/moodlechatbot:interact',
     ),
 );
 
 $services = array(
-    'Moodle Chatbot Service' => array(
-        'functions' => array('mod_moodlechatbot_send_message'),
+    'Moodle Chat Bot Service' => array(
+        'functions' => array('mod_moodlechatbot_get_bot_response'),
         'restrictedusers' => 0,
         'enabled' => 1,
-    ),
+    )
 );
