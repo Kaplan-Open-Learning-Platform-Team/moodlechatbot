@@ -1,4 +1,6 @@
 // externallib.php
+require_once($CFG->dirroot.'/mod/moodlechatbot/lib.php');
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once("$CFG->libdir/externallib.php");
