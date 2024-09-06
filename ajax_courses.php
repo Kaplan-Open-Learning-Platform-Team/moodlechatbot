@@ -1,4 +1,4 @@
-// ajax.php
+// ajax_courses.php
 require_once('../../config.php');
 require_once('lib.php');
 
