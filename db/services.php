@@ -1,12 +1,13 @@
 <?php
 $functions = array(
-    'yourplugin_ajax_get_courses' => array(
-        'classname'   => 'yourplugin_external', // You can also define the function in an external class.
-        'methodname'  => 'get_courses', // Name of your method.
-        'classpath'   => 'local/yourplugin/classes/external.php',
-        'description' => 'Get user enrolled courses for chatbot',
+    'mod_moodlechatbot_get_enrolled_courses' => array(
+        'classname'   => 'mod_moodlechatbot_external',
+        'methodname'  => 'get_enrolled_courses',
+        'classpath'   => 'mod/moodlechatbot/externallib.php',
+        'description' => 'Returns a list of enrolled courses for a given user',
         'type'        => 'read',
-        'ajax'        => true
+        'ajax'        => true,
+        'capabilities'=> 'moodle/course:view'
     ),
 );
 
