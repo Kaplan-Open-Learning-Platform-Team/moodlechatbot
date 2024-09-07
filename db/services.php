@@ -1,22 +1,12 @@
 <?php
-
 $functions = array(
-    'mod_moodlechatbot_get_enrolled_courses' => array(
-        'classname'   => 'mod_moodlechatbot_external',
-        'methodname'  => 'get_enrolled_courses',
-        'classpath'   => 'mod/moodlechatbot/externallib.php',
-        'description' => 'Returns a list of courses the user is enrolled in',
+    'yourplugin_ajax_get_courses' => array(
+        'classname'   => 'yourplugin_external', // You can also define the function in an external class.
+        'methodname'  => 'get_courses', // Name of your method.
+        'classpath'   => 'local/yourplugin/classes/external.php',
+        'description' => 'Get user enrolled courses for chatbot',
         'type'        => 'read',
-        'ajax'        => true, // Enable AJAX
-        'loginrequired' => true,
-        'capabilities' => ''
+        'ajax'        => true
     ),
 );
 
-$services = array(
-    'Moodle Chatbot Service' => array(
-        'functions' => array('mod_moodlechatbot_get_enrolled_courses'),
-        'restrictedusers' => 0,
-        'enabled' => 1,
-    ),
-);
