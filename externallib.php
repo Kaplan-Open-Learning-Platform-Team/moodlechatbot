@@ -1,43 +1,63 @@
+<?php
+
 defined('MOODLE_INTERNAL') || die();
 
 require_once("$CFG->libdir/externallib.php");
-require_once($CFG->dirroot.'/mod/moodlechatbot/lib.php'); // Include lib.php where the course fetching logic is defined
 
+/**
+ * Class to define external functions for the Moodle chatbot.
+ */
 class mod_moodlechatbot_external extends external_api {
 
-    // Parameters definition for the function
+    /**
+     * Define the parameters for the external function get_enrolled_courses.
+     *
+     * @return external_function_parameters
+     */
     public static function get_enrolled_courses_parameters() {
         return new external_function_parameters([]);
     }
 
-    // The function to fetch enrolled courses
+    /**
+     * Fetch and return the courses a user is enrolled in.
+     *
+     * @return array List of enrolled courses.
+     * @throws moodle_exception
+     */
     public static function get_enrolled_courses() {
-        global $USER;
+        global $USER, $DB;
 
-        // Validate parameters.
-        self::validate_parameters(self::get_enrolled_courses_parameters(), []);
+        // Check for cached data (optional, if caching is implemented)
+        $cache = cache::make('mod_moodlechatbot', 'moodlechatbot_courses');
+        $cachedcourses = $cache->get($USER->id);
 
-        // Context validation.
-        $context = context_system::instance(); // Can be CONTEXT_SYSTEM or CONTEXT_MODULE
-        self::validate_context($context);
+        if ($cachedcourses !== false) {
+            return $cachedcourses; // Return cached courses if available
+        }
 
-        // Capability checking (optional, if you have implemented permissions in access.php)
-        // require_capability('mod/moodlechatbot:view', $context);
+        // Fetch enrolled courses for the current user
+        $courses = enrol_get_users_courses($USER->id, true, 'id, fullname');
+        
+        // Store the result in the cache
+        $cache->set($USER->id, $courses);
 
-        // Call the function from lib.php to get the courses
-        $courses = mod_moodlechatbot_get_enrolled_courses($USER->id);
-
-        // Return the courses list
-        return $courses;
+        // Return the list of courses
+        return array_values($courses);
     }
 
-    // Return structure for the function (defines the format of the response)
+    /**
+     * Define the return structure for the get_enrolled_courses function.
+     *
+     * @return external_multiple_structure
+     */
     public static function get_enrolled_courses_returns() {
         return new external_multiple_structure(
-            new external_single_structure([
-                'id' => new external_value(PARAM_INT, 'Course ID'),
-                'fullname' => new external_value(PARAM_TEXT, 'Course full name'),
-            ])
+            new external_single_structure(
+                array(
+                    'id' => new external_value(PARAM_INT, 'Course ID'),
+                    'fullname' => new external_value(PARAM_TEXT, 'Course Fullname')
+                )
+            )
         );
     }
 }
