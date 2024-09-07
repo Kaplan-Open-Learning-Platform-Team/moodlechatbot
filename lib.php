@@ -40,10 +40,6 @@ function moodlechatbot_supports($feature) {
 /**
  * Saves a new instance of the mod_moodlechatbot into the database.
  *
- * Given an object containing all the necessary data, (defined by the form
- * in mod_form.php) this function will create a new instance and return the id
- * number of the instance.
- *
  * @param object $moduleinstance An object from the form.
  * @param mod_moodlechatbot_mod_form $mform The form.
  * @return int The id of the newly inserted record.
@@ -60,9 +56,6 @@ function moodlechatbot_add_instance($moduleinstance, $mform = null) {
 
 /**
  * Updates an instance of the mod_moodlechatbot in the database.
- *
- * Given an object containing all the necessary data (defined in mod_form.php),
- * this function will update an existing instance with new data.
  *
  * @param object $moduleinstance An object from the form in mod_form.php.
  * @param mod_moodlechatbot_mod_form $mform The form.
@@ -109,22 +102,50 @@ function moodlechatbot_delete_instance($id) {
  *   - id: The course ID.
  *   - fullname: The full name of the course.
  */
-function chatbot_get_user_enrolled_courses($userid) {
-    global $DB;
-
+function mod_moodlechatbot_get_enrolled_courses($userid) {
     // Use Moodle's internal API to fetch enrolled courses
-    $courses = enrol_get_users_courses($userid, true, 'id, shortname, fullname');
+    $courses = enrol_get_users_courses($userid, true, null, 'visible DESC, sortorder ASC');
 
-    $course_list = array();
+    // Prepare an array to return course names and IDs
+    $courselist = array();
     foreach ($courses as $course) {
-        $course_list[] = array(
+        $courselist[] = array(
             'id' => $course->id,
-            'shortname' => $course->shortname,
             'fullname' => $course->fullname
         );
     }
 
-    return $course_list;
+    return $courselist;
 }
 
+/**
+ * AJAX callback to get enrolled courses for the currently logged-in user.
+ *
+ * This function is designed to be called via an AJAX request.
+ */
+function mod_moodlechatbot_ajax_get_enrolled_courses() {
+    global $USER;
 
+    // Check if the user is logged in and authorized
+    require_sesskey();
+
+    // Call the function to fetch the enrolled courses for the current user
+    $courses = mod_moodlechatbot_get_enrolled_courses($USER->id);
+
+    // Return the courses as a JSON response
+    echo json_encode($courses);
+    die(); // Ensure no further output
+}
+
+/**
+ * Register the AJAX service for fetching enrolled courses.
+ */
+function moodlechatbot_extend_navigation(navigation_node $navref, stdClass $course, stdClass $module, context_module $context) {
+    global $PAGE;
+
+    // This function registers the mod_moodlechatbot_ajax_get_enrolled_courses function as an AJAX callable method.
+    $PAGE->requires->js_call_amd('mod_moodlechatbot/courses', 'init', array(
+        'ajaxurl' => new moodle_url('/mod/moodlechatbot/ajax.php'),
+        'sesskey' => sesskey(),
+    ));
+}
