@@ -23,7 +23,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         // Function to get enrolled courses
         const getEnrolledCourses = () => {
             Ajax.call([{
-                methodname: 'mod_moodlechatbot_get_enrolled_courses', // Method registered in services.php
+                methodname: 'mod_moodlechatbot_get_enrolled_courses',
                 args: {}
             }])[0].done(function(courses) {
                 if (courses.length > 0) {
@@ -38,17 +38,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             }).fail(function(error) {
                 appendMessage('assistant', 'Sorry, I could not fetch your enrolled courses.');
                 Log.error('AJAX call failed:', error);
-                if (error.exception) {
-                    Log.error('Exception:', error.exception);
-                }
-                if (error.message) {
-                    Log.error('Error message:', error.message);
-                }
-                if (error.debuginfo) {
-                    Log.error('Debug info:', error.debuginfo);
-                }
             });
-
         };
 
         // Function to send the user input to the API using fetch
