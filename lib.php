@@ -109,21 +109,22 @@ function moodlechatbot_delete_instance($id) {
  *   - id: The course ID.
  *   - fullname: The full name of the course.
  */
-function mod_moodlechatbot_get_enrolled_courses($userid) {
+function chatbot_get_user_enrolled_courses($userid) {
     global $DB;
 
-    // Get courses where the user is enrolled.
-    $courses = enrol_get_users_courses($userid, true, null, 'visible DESC, sortorder ASC');
+    // Use Moodle's internal API to fetch enrolled courses
+    $courses = enrol_get_users_courses($userid, true, 'id, shortname, fullname');
 
-    // Prepare an array to return course names and IDs.
-    $courselist = array();
+    $course_list = array();
     foreach ($courses as $course) {
-        $courselist[] = array(
+        $course_list[] = array(
             'id' => $course->id,
+            'shortname' => $course->shortname,
             'fullname' => $course->fullname
         );
     }
 
-    return $courselist;
+    return $course_list;
 }
+
 
