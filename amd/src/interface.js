@@ -23,8 +23,8 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         // Function to get enrolled courses
         const getEnrolledCourses = () => {
             Ajax.call([{
-                methodname: 'mod_moodlechatbot_get_enrolled_courses',
-                args: {}
+                methodname: 'mod_moodlechatbot_get_enrolled_courses', // Replace with your plugin's function name
+                args: {} 
             }])[0].done(function(courses) {
                 if (courses.length > 0) {
                     let courseList = 'You are currently enrolled in the following courses:\n';
@@ -37,7 +37,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 }
             }).fail(function(error) {
                 appendMessage('assistant', 'Sorry, I could not fetch your enrolled courses.');
-                Log.error('AJAX call failed:', error);
+                Log.error('AJAX call failed:', error); 
             });
         };
 
