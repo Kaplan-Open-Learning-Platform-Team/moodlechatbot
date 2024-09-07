@@ -103,9 +103,17 @@ function moodlechatbot_delete_instance($id) {
  *   - fullname: The full name of the course.
  */
 function mod_moodlechatbot_get_enrolled_courses($userid) {
+    global $DB;
+
+    // Check if the user has the capability to view courses
+    $usercontext = context_user::instance($userid);
+    if (!has_capability('moodle/course:view', $usercontext)) {
+        throw new moodle_exception('nopermissions', 'error', '', 'view courses');
+    }
+
     // Use Moodle's internal API to fetch enrolled courses
     $courses = enrol_get_users_courses($userid, true, null, 'visible DESC, sortorder ASC');
-
+    
     // Prepare an array to return course names and IDs
     $courselist = array();
     foreach ($courses as $course) {
@@ -114,7 +122,6 @@ function mod_moodlechatbot_get_enrolled_courses($userid) {
             'fullname' => $course->fullname
         );
     }
-
     return $courselist;
 }
 
