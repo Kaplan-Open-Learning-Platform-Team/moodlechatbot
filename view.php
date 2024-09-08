@@ -74,4 +74,24 @@ $userid = $USER->id;  // Capture the user ID.
 // Include the JavaScript module and Pass the user ID to your JavaScript file.
 $PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init', array($userid));
 
+// Check if this is an AJAX request to get user courses.
+if (optional_param('action', '', PARAM_ALPHA) === 'get_courses') {
+    global $USER;
+
+    // Call your existing function to get the user's courses.
+    $courses = get_user_courses($USER->id);
+
+    // Prepare the course names to return.
+    $course_names = [];
+    if ($courses) {
+        foreach ($courses as $course) {
+            $course_names[] = $course->fullname;
+        }
+    }
+
+    // Return the course list as JSON.
+    echo json_encode(['courses' => $course_names]);
+    exit;
+}
+
 echo $OUTPUT->footer();
