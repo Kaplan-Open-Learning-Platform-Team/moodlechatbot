@@ -4,8 +4,8 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
     // Initialize function to bind events and set up the chatbot
     const init = (userId) => {
         // Log the userId to ensure it's being passed correctly
-        Log.debug('Current User ID:', userId); 
-        
+        Log.debug('Current User ID:', userId);
+
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
         const messagesContainer = document.getElementById("moodlechatbot-messages");
@@ -13,7 +13,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         // Function to append messages to the chat
         const appendMessage = (role, content) => {
             const messageElement = document.createElement("div");
-            messageElement.classList.add('message', role); 
+            messageElement.classList.add('message', role);
             messageElement.textContent = content;
             messagesContainer.appendChild(messageElement);
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
