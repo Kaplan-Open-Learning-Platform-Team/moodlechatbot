@@ -4,7 +4,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
     // Initialize function to bind events and set up the chatbot
     const init = (userId) => {
         // Log the userId to ensure it's being passed correctly
-        Log.debug('Current User ID:', userId);  // Use 'Log' instead of 'log'
+        Log.debug('Current User ID:', userId); 
         
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
@@ -13,10 +13,10 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         // Function to append messages to the chat
         const appendMessage = (role, content) => {
             const messageElement = document.createElement("div");
-            messageElement.classList.add('message', role); // 'message' class with 'user' or 'assistant' roles
+            messageElement.classList.add('message', role); 
             messageElement.textContent = content;
             messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to the bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         };
 
         // Function to send the user input to the API using fetch
@@ -69,7 +69,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             })
             .catch(error => {
                 appendMessage("assistant", "There was an error connecting to the server.");
-                Log.error('Fetch Error:', error);  // Log the error using 'Log.error'
+                Log.error('Fetch Error:', error);
             });
         };
 
@@ -79,7 +79,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         // Add event listener to trigger the send action when "Enter" is pressed in the textarea
         textarea.addEventListener("keypress", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault(); // Prevent creating a new line
+                event.preventDefault();
                 sendMessage();
             }
         });
