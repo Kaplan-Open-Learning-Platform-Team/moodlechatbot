@@ -34,7 +34,33 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             // Clear the textarea after sending
             textarea.value = "";
 
-            // Prepare the data to send to the API
+            // Detect if the user is asking about their enrolled courses
+            if (userInput.toLowerCase().includes("what courses am i enrolled in")) {
+                // Make an AJAX call to the server to get the user's courses
+                fetch(M.cfg.wwwroot + "/mod/moodlechatbot/view.php?action=get_courses", {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.courses && data.courses.length > 0) {
+                        const coursesMessage = "You are currently enrolled in the following courses: " + data.courses.join(", ");
+                        appendMessage("assistant", coursesMessage);
+                    } else {
+                        appendMessage("assistant", "You are not currently enrolled in any courses.");
+                    }
+                })
+                .catch(error => {
+                    appendMessage("assistant", "There was an error retrieving your courses.");
+                    Log.error('Fetch Error:', error);
+                });
+
+                return;  // Exit early since we're handling this specific case.
+            }
+
+            // Otherwise, send the user's input to the external chatbot API
             const payload = {
                 model: "gemma:2b",
                 messages: [
@@ -46,7 +72,6 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 stream: false
             };
 
-            // Make the AJAX request using fetch
             fetch("http://192.168.0.102:11434/api/chat", {
                 method: 'POST',
                 headers: {
