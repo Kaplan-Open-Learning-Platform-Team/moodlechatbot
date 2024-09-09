@@ -37,7 +37,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             // Detect if the user is asking about their enrolled courses
             if (userInput.toLowerCase().includes("what courses am i enrolled in")) {
                 // Make an AJAX call to the server to get the user's courses
-                fetch(M.cfg.wwwroot + "/mod/moodlechatbot/view.php?action=get_courses", {
+                fetch(M.cfg.wwwroot + "/mod/moodlechatbot/view.php?ajax=true", {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json'
