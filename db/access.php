@@ -1,5 +1,5 @@
 <?php
-
+//access.php
 // This file defines the capabilities for the Moodle Chatbot plugin.
 
 defined('MOODLE_INTERNAL') || die();
