@@ -1,30 +1,7 @@
 <?php
-// This file is part of Moodle - https://moodle.org/
-//
-// Moodle is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// Moodle is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
-
-/**
- * Prints an instance of mod_moodlechatbot.
- *
- * @package     mod_moodlechatbot
- * @copyright   2024 Kaplan Open Learning <kol-learning-tech@kaplan.com>
- * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- */
-
 require(__DIR__.'/../../config.php');
 require_once(__DIR__.'/lib.php');
-require_once($CFG->dirroot.'/enrol/locallib.php');  // ADD THIS LINE
+require_once($CFG->dirroot.'/enrol/locallib.php');
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
@@ -45,6 +22,7 @@ if (optional_param('ajax', false, PARAM_BOOL)) {
                 $course->fullname = $DB->get_field('course', 'fullname', array('id' => $course->id));
             }
         }
+        error_log(print_r($courses, true)); // Log the courses
         return $courses;
     }
 
@@ -57,7 +35,7 @@ if (optional_param('ajax', false, PARAM_BOOL)) {
     // Return the courses as a JSON response.
     header('Content-Type: application/json');
     if ($courses) {
-        echo json_encode($courses);
+        echo json_encode(array('courses' => $courses));
     } else {
         echo json_encode(array('error' => 'No courses found.'));
     }
@@ -93,10 +71,9 @@ echo html_writer::tag('button', 'Send', array('id' => 'moodlechatbot-send'));
 echo html_writer::end_tag('div');
 echo html_writer::end_tag('div');
 
-global $USER;  // Get the global $USER object to access the current user data.
-$userid = $USER->id;  // Capture the user ID.
+global $USER;
+$userid = $USER->id;
 
-// Include the JavaScript module and Pass the user ID to your JavaScript file.
 $PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init', array($userid));
 
 echo $OUTPUT->footer();
