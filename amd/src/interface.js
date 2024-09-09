@@ -18,17 +18,17 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
         const sendMessage = () => {
             const userInput = textarea.value.trim();
-
             if (!userInput) {
                 return;
             }
 
-            Log.debug('User Input:', userInput); // Log the user input
-
             appendMessage("user", userInput);
             textarea.value = "";
 
-            if (userInput.toLowerCase().includes("what courses am i enrolled in")) {
+            // Regular expression to catch variations of the enrollment query
+            const enrollmentQueryRegex = /what (courses|classes) am i (enrolled|registered) in/i;
+            
+            if (enrollmentQueryRegex.test(userInput)) {
                 fetch(M.cfg.wwwroot + "/mod/moodlechatbot/view.php?ajax=true", {
                     method: 'GET',
                     headers: {
@@ -37,11 +37,8 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 })
                 .then(response => response.json())
                 .then(data => {
-                    Log.debug('Server Response:', data); // Log the server response
                     if (data.courses && data.courses.length > 0) {
-                        const messageStart = "You are currently enrolled in the following courses: ";
-                        const courseNames = data.courses.map(course => course.fullname).join(", ");
-                        const coursesMessage = messageStart + courseNames;
+                        const coursesMessage = `You are currently enrolled in the following courses: ${data.courses.join(", ")}`;
                         appendMessage("assistant", coursesMessage);
                     } else {
                         appendMessage("assistant", "You are not currently enrolled in any courses.");
@@ -51,17 +48,14 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                     appendMessage("assistant", "There was an error retrieving your courses.");
                     Log.error('Fetch Error:', error);
                 });
-
                 return;
             }
 
+            // For other queries...
             const payload = {
                 model: "gemma:2b",
                 messages: [
-                    {
-                        role: "user",
-                        content: userInput
-                    }
+                    { role: "user", content: userInput }
                 ],
                 stream: false
             };
@@ -93,7 +87,6 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         };
 
         sendButton.addEventListener("click", sendMessage);
-
         textarea.addEventListener("keypress", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
@@ -102,7 +95,5 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         });
     };
 
-    return {
-        init: init
-    };
+    return { init: init };
 });
