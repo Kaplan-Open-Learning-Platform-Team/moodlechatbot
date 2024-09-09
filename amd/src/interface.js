@@ -1,3 +1,4 @@
+//interface.js
 define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
     const init = (userId) => {
