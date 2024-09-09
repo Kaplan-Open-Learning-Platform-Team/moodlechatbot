@@ -38,7 +38,9 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 .then(data => {
                     Log.debug('Server Response:', data); // Log the server response
                     if (data.courses && data.courses.length > 0) {
-                        const coursesMessage = "You are currently enrolled in the following courses: " + data.courses.map(course => course.fullname).join(", ");
+                        const messageStart = "You are currently enrolled in the following courses: ";
+                        const courseNames = data.courses.map(course => course.fullname).join(", ");
+                        const coursesMessage = messageStart + courseNames;
                         appendMessage("assistant", coursesMessage);
                     } else {
                         appendMessage("assistant", "You are not currently enrolled in any courses.");
