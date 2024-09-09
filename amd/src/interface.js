@@ -21,14 +21,14 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             if (!userInput) {
                 return;
             }
-
             appendMessage("user", userInput);
             textarea.value = "";
-
+        
             // Regular expression to catch variations of the enrollment query
             const enrollmentQueryRegex = /what (courses|classes) am i (enrolled|registered) in/i;
-
+            
             if (enrollmentQueryRegex.test(userInput)) {
+                // Make AJAX call to view.php
                 fetch(M.cfg.wwwroot + "/mod/moodlechatbot/view.php?ajax=true", {
                     method: 'GET',
                     headers: {
@@ -45,11 +45,20 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                     }
                 })
                 .catch(error => {
-                    appendMessage("assistant", "There was an error retrieving your courses.");
-                    Log.error('Fetch Error:', error);
+                    console.error('Error fetching courses:', error);
+                    appendMessage("assistant", "There was an error retrieving your course information. Please try again later.");
                 });
                 return;
             }
+        
+            // For other queries, proceed with the existing chat model logic
+            const payload = {
+                model: "gemma:2b",
+                messages: [
+                    { role: "user", content: userInput }
+                ],
+                stream: false
+            };
 
             // For other queries...
             const payload = {
