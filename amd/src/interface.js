@@ -1,16 +1,12 @@
-// Define the module using Moodle's AMD module structure
 define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
-    // Initialize function to bind events and set up the chatbot
     const init = (userId) => {
-        // Log the userId to ensure it's being passed correctly
         Log.debug('Current User ID:', userId);
 
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
         const messagesContainer = document.getElementById("moodlechatbot-messages");
 
-        // Function to append messages to the chat
         const appendMessage = (role, content) => {
             const messageElement = document.createElement("div");
             messageElement.classList.add('message', role);
@@ -19,24 +15,19 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight;
         };
 
-        // Function to send the user input to the API using fetch
         const sendMessage = () => {
             const userInput = textarea.value.trim();
 
-            // Ensure the user input is not empty
             if (!userInput) {
                 return;
             }
 
-            // Append the user's message to the chat
-            appendMessage("user", userInput);
+            Log.debug('User Input:', userInput); // Log the user input
 
-            // Clear the textarea after sending
+            appendMessage("user", userInput);
             textarea.value = "";
 
-            // Detect if the user is asking about their enrolled courses
             if (userInput.toLowerCase().includes("what courses am i enrolled in")) {
-                // Make an AJAX call to the server to get the user's courses
                 fetch(M.cfg.wwwroot + "/mod/moodlechatbot/view.php?ajax=true", {
                     method: 'GET',
                     headers: {
@@ -45,8 +36,9 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 })
                 .then(response => response.json())
                 .then(data => {
+                    Log.debug('Server Response:', data); // Log the server response
                     if (data.courses && data.courses.length > 0) {
-                        const coursesMessage = "You are currently enrolled in the following courses: " + data.courses.join(", ");
+                        const coursesMessage = "You are currently enrolled in the following courses: " + data.courses.map(course => course.fullname).join(", ");
                         appendMessage("assistant", coursesMessage);
                     } else {
                         appendMessage("assistant", "You are not currently enrolled in any courses.");
@@ -57,10 +49,9 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                     Log.error('Fetch Error:', error);
                 });
 
-                return;  // Exit early since we're handling this specific case.
+                return;
             }
 
-            // Otherwise, send the user's input to the external chatbot API
             const payload = {
                 model: "gemma:2b",
                 messages: [
@@ -98,10 +89,8 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             });
         };
 
-        // Add event listener for the send button
         sendButton.addEventListener("click", sendMessage);
 
-        // Add event listener to trigger the send action when "Enter" is pressed in the textarea
         textarea.addEventListener("keypress", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
@@ -110,7 +99,6 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         });
     };
 
-    // Return the public API
     return {
         init: init
     };
