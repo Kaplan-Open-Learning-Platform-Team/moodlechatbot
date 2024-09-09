@@ -27,7 +27,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
             // Regular expression to catch variations of the enrollment query
             const enrollmentQueryRegex = /what (courses|classes) am i (enrolled|registered) in/i;
-            
+
             if (enrollmentQueryRegex.test(userInput)) {
                 fetch(M.cfg.wwwroot + "/mod/moodlechatbot/view.php?ajax=true", {
                     method: 'GET',
