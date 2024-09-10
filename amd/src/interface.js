@@ -1,74 +1,51 @@
 //interface.js
+// Define the module using Moodle's AMD module structure
 define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
-    const init = (userId) => {
-        Log.debug('Current User ID:', userId);
-
+    // Initialize function to bind events and set up the chatbot
+    const init = () => {
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
         const messagesContainer = document.getElementById("moodlechatbot-messages");
 
+        // Function to append messages to the chat
         const appendMessage = (role, content) => {
             const messageElement = document.createElement("div");
-            messageElement.classList.add('message', role);
+            messageElement.classList.add('message', role); // 'message' class with 'user' or 'assistant' roles
             messageElement.textContent = content;
             messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to the bottom
         };
 
+        // Function to send the user input to the API using fetch
         const sendMessage = () => {
             const userInput = textarea.value.trim();
+
+            // Ensure the user input is not empty
             if (!userInput) {
                 return;
             }
+
+
+            // Append the user's message to the chat
             appendMessage("user", userInput);
+
+            // Clear the textarea after sending
             textarea.value = "";
-        
-            // Regular expression to catch variations of the enrollment query
-            const enrollmentQueryRegex = /what (courses|classes) am i (enrolled|registered) in/i;
-            
-            if (enrollmentQueryRegex.test(userInput)) {
-                // Make AJAX call to view.php
-                fetch(M.cfg.wwwroot + "/mod/moodlechatbot/view.php?ajax=true", {
-                    method: 'GET',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.courses && data.courses.length > 0) {
-                        const coursesMessage = `You are currently enrolled in the following courses: ${data.courses.join(", ")}`;
-                        appendMessage("assistant", coursesMessage);
-                    } else {
-                        appendMessage("assistant", "You are not currently enrolled in any courses.");
-                    }
-                })
-                .catch(error => {
-                    console.error('Error fetching courses:', error);
-                    appendMessage("assistant", "There was an error retrieving your course information. Please try again later.");
-                });
-                return;
-            }
-        
-            // For other queries, proceed with the existing chat model logic
+
+            // Prepare the data to send to the API
             const payload = {
                 model: "gemma:2b",
                 messages: [
-                    { role: "user", content: userInput }
+                    {
+                        role: "user",
+                        content: userInput
+                    }
                 ],
                 stream: false
             };
 
-            // For other queries...
-            const payload = {
-                model: "gemma:2b",
-                messages: [
-                    { role: "user", content: userInput }
-                ],
-                stream: false
-            };
-
+            // Make the AJAX request using fetch
             fetch("http://192.168.0.102:11434/api/chat", {
                 method: 'POST',
                 headers: {
@@ -95,14 +72,23 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             });
         };
 
+        // Add event listener for the send button
         sendButton.addEventListener("click", sendMessage);
+
+        // Add event listener to trigger the send action when "Enter" is pressed in the textarea
         textarea.addEventListener("keypress", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault();
+                event.preventDefault(); // Prevent creating a new line
                 sendMessage();
             }
         });
     };
+
+    // Return the public API
+    return {
+        init: init
+    };
+});
 
     return { init: init };
 });
