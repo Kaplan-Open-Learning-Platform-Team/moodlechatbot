@@ -26,11 +26,20 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             appendMessage("user", userInput);
             // Clear the textarea after sending
             textarea.value = "";
-            // Check if the query is about enrolled courses
-            if (userInput.toLowerCase().includes("what courses am i currently enrolled in")) {
+            
+            // Check if the query is about enrolled courses (case-insensitive and more flexible)
+            if (/what courses am i (currently )?enrolled in/i.test(userInput)) {
                 // Make an AJAX request to get the courses
-                fetch(`${M.cfg.wwwroot}/mod/moodlechatbot/view.php?action=get_courses`)
-                    .then(response => response.json())
+                fetch(`${M.cfg.wwwroot}/mod/moodlechatbot/view.php?action=get_courses`, {
+                    method: 'GET',
+                    credentials: 'same-origin' // This ensures cookies are sent with the request
+                })
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.json();
+                    })
                     .then(data => {
                         if (data.courses && data.courses.length > 0) {
                             appendMessage("assistant", "You are enrolled in the following courses:");
@@ -42,7 +51,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                         }
                     })
                     .catch(error => {
-                        appendMessage("assistant", "Error retrieving courses.");
+                        appendMessage("assistant", "Error retrieving courses. Please try again later.");
                         Log.error('Fetch Error:', error);
                     });
             } else {
