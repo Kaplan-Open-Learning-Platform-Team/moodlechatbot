@@ -1,4 +1,3 @@
-
 <?php
 // view.php
 
@@ -7,9 +6,8 @@ require_once(__DIR__.'/lib.php');
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
-
-// Activity instance id.
 $m = optional_param('m', 0, PARAM_INT);
+$action = optional_param('action', '', PARAM_TEXT); // New parameter for AJAX actions
 
 if ($id) {
     $cm = get_coursemodule_from_id('moodlechatbot', $id, 0, false, MUST_EXIST);
@@ -22,13 +20,30 @@ if ($id) {
 }
 
 require_login($course, true, $cm);
-
 $modulecontext = context_module::instance($cm->id);
 
 $PAGE->set_url('/mod/moodlechatbot/view.php', array('id' => $cm->id));
 $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
+
+// Handle AJAX request for 'get_courses' action
+if ($action === 'get_courses') {
+    global $USER;
+
+    // Get the courses the user is enrolled in
+    $courses = enrol_get_users_courses($USER->id, true);
+
+    // Prepare a response array to send course names
+    $courses_list = array_map(function($course) {
+        return $course->fullname;
+    }, $courses);
+
+    // Send the response in JSON format
+    header('Content-Type: application/json');
+    echo json_encode($courses_list);
+    exit;
+}
 
 echo $OUTPUT->header();
 
