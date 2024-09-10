@@ -1,8 +1,6 @@
 //interface.js
-// Define the module using Moodle's AMD module structure
 define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
-    // Initialize function to bind events and set up the chatbot
     const init = () => {
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
@@ -17,7 +15,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to the bottom
         };
 
-        // Function to send the user input to the API using fetch
+        // Function to send the user input to the API
         const sendMessage = () => {
             const userInput = textarea.value.trim();
 
@@ -26,50 +24,69 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 return;
             }
 
-
             // Append the user's message to the chat
             appendMessage("user", userInput);
 
             // Clear the textarea after sending
             textarea.value = "";
 
-            // Prepare the data to send to the API
-            const payload = {
-                model: "gemma:2b",
-                messages: [
-                    {
-                        role: "user",
-                        content: userInput
-                    }
-                ],
-                stream: false
-            };
+            // Check if the query is about enrolled courses
+            if (userInput.toLowerCase().includes("what courses am i currently enrolled in")) {
+                // Make an AJAX request to get the courses
+                fetch(`view.php?action=get_courses`)
+                    .then(response => response.json())
+                    .then(courses => {
+                        if (courses.length > 0) {
+                            appendMessage("assistant", "You are enrolled in the following courses:");
+                            courses.forEach(course => {
+                                appendMessage("assistant", course);
+                            });
+                        } else {
+                            appendMessage("assistant", "You are not enrolled in any courses.");
+                        }
+                    })
+                    .catch(error => {
+                        appendMessage("assistant", "Error retrieving courses.");
+                        Log.error('Fetch Error:', error);
+                    });
+            } else {
+                // Handle other messages with the external API
+                const payload = {
+                    model: "gemma:2b",
+                    messages: [
+                        {
+                            role: "user",
+                            content: userInput
+                        }
+                    ],
+                    stream: false
+                };
 
-            // Make the AJAX request using fetch
-            fetch("http://192.168.0.102:11434/api/chat", {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data && data.message && data.message.content) {
-                    appendMessage("assistant", data.message.content);
-                } else {
-                    appendMessage("assistant", "Sorry, I couldn't process the response.");
-                }
-            })
-            .catch(error => {
-                appendMessage("assistant", "There was an error connecting to the server.");
-                Log.error('Fetch Error:', error);
-            });
+                fetch("http://192.168.0.102:11434/api/chat", {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.message && data.message.content) {
+                        appendMessage("assistant", data.message.content);
+                    } else {
+                        appendMessage("assistant", "Sorry, I couldn't process the response.");
+                    }
+                })
+                .catch(error => {
+                    appendMessage("assistant", "There was an error connecting to the server.");
+                    Log.error('Fetch Error:', error);
+                });
+            }
         };
 
         // Add event listener for the send button
@@ -84,8 +101,8 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
         });
     };
 
-    // Return the public API
     return {
         init: init
     };
 });
+
