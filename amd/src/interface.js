@@ -1,44 +1,40 @@
-//interface.js
 define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
-    const init = () => {
+    const init = (userId) => {
+        Log.debug('Current User ID:', userId);
+
         const sendButton = document.getElementById("moodlechatbot-send");
         const textarea = document.getElementById("moodlechatbot-textarea");
         const messagesContainer = document.getElementById("moodlechatbot-messages");
 
-        // Function to append messages to the chat
         const appendMessage = (role, content) => {
             const messageElement = document.createElement("div");
-            messageElement.classList.add('message', role); // 'message' class with 'user' or 'assistant' roles
+            messageElement.classList.add('message', role);
             messageElement.textContent = content;
             messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to the bottom
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
         };
 
         // Function to send the user input to the API
         const sendMessage = () => {
             const userInput = textarea.value.trim();
-
             // Ensure the user input is not empty
             if (!userInput) {
                 return;
             }
-
             // Append the user's message to the chat
             appendMessage("user", userInput);
-
             // Clear the textarea after sending
             textarea.value = "";
-
             // Check if the query is about enrolled courses
             if (userInput.toLowerCase().includes("what courses am i currently enrolled in")) {
                 // Make an AJAX request to get the courses
-                fetch(`view.php?action=get_courses`)
+                fetch(`${M.cfg.wwwroot}/mod/moodlechatbot/view.php?action=get_courses`)
                     .then(response => response.json())
-                    .then(courses => {
-                        if (courses.length > 0) {
+                    .then(data => {
+                        if (data.courses && data.courses.length > 0) {
                             appendMessage("assistant", "You are enrolled in the following courses:");
-                            courses.forEach(course => {
+                            data.courses.forEach(course => {
                                 appendMessage("assistant", course);
                             });
                         } else {
@@ -61,7 +57,6 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                     ],
                     stream: false
                 };
-
                 fetch("http://192.168.0.102:11434/api/chat", {
                     method: 'POST',
                     headers: {
@@ -89,20 +84,14 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             }
         };
 
-        // Add event listener for the send button
         sendButton.addEventListener("click", sendMessage);
-
-        // Add event listener to trigger the send action when "Enter" is pressed in the textarea
         textarea.addEventListener("keypress", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
-                event.preventDefault(); // Prevent creating a new line
+                event.preventDefault();
                 sendMessage();
             }
         });
     };
 
-    return {
-        init: init
-    };
+    return { init: init };
 });
-
