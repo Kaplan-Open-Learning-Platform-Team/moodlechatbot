@@ -26,7 +26,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
             appendMessage("user", userInput);
             // Clear the textarea after sending
             textarea.value = "";
-            
+
             // Check if the query is about enrolled courses (case-insensitive and more flexible)
             if (/what courses am i (currently )?enrolled in/i.test(userInput)) {
                 // Make an AJAX request to get the courses
