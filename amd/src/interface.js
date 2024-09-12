@@ -66,7 +66,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                     ],
                     stream: false
                 };
-                fetch("http://192.168.0.102:11434/api/chat", {
+                fetch("http://192.168.0.101:11434/api/chat", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
