@@ -1,3 +1,4 @@
+<?php
 $functions = [
     'moodlechatbot_get_enrolled_courses' => [
         'classname' => 'moodlechatbot\external\get_enrolled_courses',
