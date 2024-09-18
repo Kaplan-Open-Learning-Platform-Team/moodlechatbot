@@ -34,7 +34,7 @@ define(['core/ajax', 'core/log'], function(Ajax, Log) {
     // Check if the query is about enrolled courses
     if (userInput.toLowerCase().includes('what courses am i enrolled in')) {
         // Use require to load the module that fetches enrolled courses
-        require(['yourpluginname/enrolled_courses'], function(enrolledCourses) {
+        require(['moodlechatbot/enrolled_courses'], function(enrolledCourses) {
             enrolledCourses.getCourses()
                 .then(courses => {
                     // Append the list of courses as the assistant's response
