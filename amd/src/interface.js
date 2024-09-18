@@ -1,5 +1,7 @@
+
+//interface.js
 // Define the module using Moodle's AMD module structure
-define(['core/ajax', 'core/log', 'moodlechatbot/enrolled_courses'], (Ajax, Log, enrolledCourses) => { 
+define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
 
     // Initialize function to bind events and set up the chatbot
     const init = () => {
@@ -10,45 +12,46 @@ define(['core/ajax', 'core/log', 'moodlechatbot/enrolled_courses'], (Ajax, Log, 
         // Function to append messages to the chat
         const appendMessage = (role, content) => {
             const messageElement = document.createElement("div");
-            messageElement.classList.add('message', role); 
+            messageElement.classList.add('message', role); // 'message' class with 'user' or 'assistant' roles
             messageElement.textContent = content;
             messagesContainer.appendChild(messageElement);
-            messagesContainer.scrollTop = messagesContainer.scrollHeight; 
+            messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll to the bottom
         };
 
+        // Function to send the user input to the API using fetch
         const sendMessage = () => {
             const userInput = textarea.value.trim();
 
+            // Ensure the user input is not empty
             if (!userInput) {
                 return;
             }
 
+
+            // Append the user's message to the chat
             appendMessage("user", userInput);
+
+            // Clear the textarea after sending
             textarea.value = "";
 
-            if (userInput.toLowerCase().includes('what courses am i enrolled in')) {
-                enrolledCourses.getCourses()
-                    .then(courses => {
-                        const courseList = courses.join(", ");
-                        appendMessage("assistant", `You are enrolled in the following courses: ${courseList}`);
-                    })
-                    .catch(error => {
-                        appendMessage("assistant", "Sorry, I couldn't fetch your enrolled courses.");
-                        // Log the error for debugging (optional)
-                        Log.error('Error fetching courses:', error); 
-                    });
-                return; 
-            }
-
+            // Prepare the data to send to the API
             const payload = {
                 model: "gemma:2b",
-                messages: [{ role: "user", content: userInput }],
+                messages: [
+                    {
+                        role: "user",
+                        content: userInput
+                    }
+                ],
                 stream: false
             };
 
+            // Make the AJAX request using fetch
             fetch("http://192.168.130.1:11434/api/chat", {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json'
+                },
                 body: JSON.stringify(payload)
             })
             .then(response => {
@@ -66,14 +69,26 @@ define(['core/ajax', 'core/log', 'moodlechatbot/enrolled_courses'], (Ajax, Log, 
             })
             .catch(error => {
                 appendMessage("assistant", "There was an error connecting to the server.");
-                // Log the error for debugging (optional)
-                Log.error('Fetch Error:', error); 
+                Log.error('Fetch Error:', error);
             });
         };
 
-        // ... (Rest of your initialization logic, e.g., event listeners) ...
+        // Add event listener for the send button
+        sendButton.addEventListener("click", sendMessage);
 
-    }; // End of init()
+        // Add event listener to trigger the send action when "Enter" is pressed in the textarea
+        textarea.addEventListener("keypress", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault(); // Prevent creating a new line
+                sendMessage();
+            }
+        });
+    };
 
-    return { init }; 
+    // Return the public API
+    return {
+        init: init
+    };
 });
+
+
