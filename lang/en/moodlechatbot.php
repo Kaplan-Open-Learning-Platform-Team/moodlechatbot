@@ -33,3 +33,6 @@ $string['moodlechatbotname'] = 'Moodle Chat Bot';
 $string['moodlechatbotsettings'] = 'Moodle Chat Bot Settings';
 $string['moodlechatbotfieldset'] = 'Chat Bot Settings';
 $string['moodlechatbotname_help'] = 'Moodle Chat Bot Name Help';
+
+// New string for the web service
+$string['getcoursesservice'] = 'Get enrolled courses service';
