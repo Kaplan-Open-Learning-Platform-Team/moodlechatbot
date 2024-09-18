@@ -1,6 +1,6 @@
 //interface.js
 // Define the module using Moodle's AMD module structure
-define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
+define(['core/ajax', 'core/log'], function(Ajax, Log) {
 
     // Initialize function to bind events and set up the chatbot
     const init = () => {
