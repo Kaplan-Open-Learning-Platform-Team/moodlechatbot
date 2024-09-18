@@ -43,7 +43,7 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
                 })
                 .catch(error => {
                     appendMessage("assistant", "Sorry, I couldn't fetch your enrolled courses.");
-                    console.error('Error fetching courses:', error);
+                    // console.error('Error fetching courses:', error);
                 });
         });
         return; // Do not send the message to the API if it's about courses
@@ -84,6 +84,6 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
     })
     .catch(error => {
         appendMessage("assistant", "There was an error connecting to the server.");
-        console.error('Fetch Error:', error);
+        // console.error('Fetch Error:', error);
     });
 };
