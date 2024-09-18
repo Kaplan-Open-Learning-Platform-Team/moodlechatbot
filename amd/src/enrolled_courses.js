@@ -1,22 +1,17 @@
-define(['core/ajax'], function(Ajax) {
+// File: amd/src/enrolled_courses.js
+define(['core/ajax'], function(ajax) {
     return {
         getCourses: function() {
-            var request = Ajax.call([{
-                methodname: 'yourpluginname_get_enrolled_courses',  // Call the web service.
+            return ajax.call([{
+                methodname: 'moodlechatbot_get_enrolled_courses',
                 args: {}
-            }]);
-
-            request[0].done(function(response) {
-                var courses = response;
-                var message = 'You are enrolled in the following courses:\n';
-                courses.forEach(function(course) {
-                    message += '- ' + course.fullname + '\n';
-                });
-                // console.log(message);
-                // The chatbot can then display this message in the interface.
-            }).fail(function(error) {
-                // console.error("Error fetching enrolled courses: ", error);
+            }])[0].then(response => {
+                return response.courses || [];
+            }).catch(error => {
+                console.error('Error fetching enrolled courses:', error);
+                throw error;
             });
         }
     };
 });
+
