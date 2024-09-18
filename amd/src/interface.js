@@ -90,5 +90,4 @@ define(['core/ajax', 'core/str', 'core/log'], function(Ajax, Str, Log) {
     };
 });
 
-    return { init: init };
-});
+
