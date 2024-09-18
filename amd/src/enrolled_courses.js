@@ -1,4 +1,4 @@
-define(['core/ajax', 'core/str'], function(Ajax, Str) {
+define(['core/ajax'], function(Ajax) {
     return {
         getCourses: function() {
             var request = Ajax.call([{
@@ -12,10 +12,10 @@ define(['core/ajax', 'core/str'], function(Ajax, Str) {
                 courses.forEach(function(course) {
                     message += '- ' + course.fullname + '\n';
                 });
-                console.log(message);
+                // console.log(message);
                 // The chatbot can then display this message in the interface.
             }).fail(function(error) {
-                console.error("Error fetching enrolled courses: ", error);
+                // console.error("Error fetching enrolled courses: ", error);
             });
         }
     };
