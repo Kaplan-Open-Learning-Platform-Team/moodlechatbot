@@ -235,3 +235,4 @@ class mod_moodlechatbot_external extends external_api
     return $info;
   }
 }
+
