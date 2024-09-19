@@ -134,11 +134,11 @@ class mod_moodlechatbot_external extends external_api
 
     // Check for HTTP errors
     if ($httpCode !== 200) {
-      $errorMessage = 'API Error';
+      $errorMessage = 'API Error: HTTP Code ' . $httpCode;
       if ($httpCode === 401) {
-        $errorMessage = 'API authentication failed. Please check your Groq API key.';
+        $errorMessage .= ' - API authentication failed. Please check your Groq API key.';
       }
-      debugging('API HTTP Code: ' . $httpCode . ' - ' . $errorMessage, DEBUG_DEVELOPER);
+      debugging($errorMessage, DEBUG_DEVELOPER);
       throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $httpCode, $errorMessage);
     }
 
@@ -146,23 +146,27 @@ class mod_moodlechatbot_external extends external_api
     $data = json_decode($response, true);
 
     // Log the decoded response for better understanding
-    debugging('Full API response: ' . print_r($data, true), DEBUG_DEVELOPER);
+    debugging('Decoded API response: ' . print_r($data, true), DEBUG_DEVELOPER);
 
     // Improved error handling and debugging
     if (json_last_error() !== JSON_ERROR_NONE) {
-      debugging('JSON decode error: ' . json_last_error_msg(), DEBUG_DEVELOPER);
-      throw new moodle_exception('invalidjson', 'mod_moodlechatbot');
+      $errorMessage = 'JSON decode error: ' . json_last_error_msg();
+      debugging($errorMessage, DEBUG_DEVELOPER);
+      throw new moodle_exception('invalidjson', 'mod_moodlechatbot', '', null, $errorMessage);
     }
 
-    // Check if the 'choices' array and the 'message' content exist
+    // Check if the 'choices' array exists
     if (!isset($data['choices']) || !is_array($data['choices']) || empty($data['choices'])) {
-      debugging('Unexpected API response structure: ' . print_r($data, true), DEBUG_DEVELOPER);
-      throw new moodle_exception('invalidresponse', 'mod_moodlechatbot');
+      $errorMessage = 'Unexpected API response structure: ' . print_r($data, true);
+      debugging($errorMessage, DEBUG_DEVELOPER);
+      throw new moodle_exception('invalidresponse', 'mod_moodlechatbot', '', null, $errorMessage);
     }
 
-    if (!isset($data['choices'][0]['message']['content'])) {
-      debugging('Missing content in API response: ' . print_r($data['choices'][0], true), DEBUG_DEVELOPER);
-      throw new moodle_exception('missingcontent', 'mod_moodlechatbot');
+    // Check if the 'message' and 'content' fields exist
+    if (!isset($data['choices'][0]['message']) || !isset($data['choices'][0]['message']['content'])) {
+      $errorMessage = 'Missing content in API response: ' . print_r($data['choices'][0], true);
+      debugging($errorMessage, DEBUG_DEVELOPER);
+      throw new moodle_exception('missingcontent', 'mod_moodlechatbot', '', null, $errorMessage);
     }
 
     // Extract the bot response
@@ -210,6 +214,8 @@ class mod_moodlechatbot_external extends external_api
    */
   private static function get_course_info($courseId)
   {
-    return "the get course function was called";
+    // TODO: Implement actual course information retrieval
+    // For now, we'll return a placeholder message
+    return "Course information for course ID: $courseId (Placeholder)";
   }
 }
