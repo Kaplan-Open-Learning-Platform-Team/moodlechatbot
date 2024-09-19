@@ -101,7 +101,7 @@ class mod_moodlechatbot_external extends external_api
     ];
 
     $postFields = [
-      'model' => 'llama3-groq-70b-8192-tool-use-preview',
+      'model' => 'llama-3.1-70b-versatile',
       'messages' => [
         ['role' => 'system', 'content' => 'You are a helpful assistant in a Moodle learning environment.'],
         ['role' => 'user', 'content' => $params['message']]
@@ -235,4 +235,3 @@ class mod_moodlechatbot_external extends external_api
     return $info;
   }
 }
-
