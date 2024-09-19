@@ -162,19 +162,17 @@ class mod_moodlechatbot_external extends external_api
       throw new moodle_exception('invalidresponse', 'mod_moodlechatbot', '', null, $errorMessage);
     }
 
-    // Check if the 'message' and 'content' fields exist
-    if (!isset($data['choices'][0]['message']) || !isset($data['choices'][0]['message']['content'])) {
-      $errorMessage = 'Missing content in API response: ' . print_r($data['choices'][0], true);
-      debugging($errorMessage, DEBUG_DEVELOPER);
-      throw new moodle_exception('missingcontent', 'mod_moodlechatbot', '', null, $errorMessage);
+    $choice = $data['choices'][0];
+    $botResponse = '';
+
+    // Check if there's a content field or tool calls
+    if (isset($choice['message']['content'])) {
+      $botResponse = $choice['message']['content'];
     }
 
-    // Extract the bot response
-    $botResponse = $data['choices'][0]['message']['content'];
-
-    // Check if the bot wants to use a tool
-    if ($enableTools && isset($data['choices'][0]['message']['tool_calls'])) {
-      $toolCalls = $data['choices'][0]['message']['tool_calls'];
+    // Handle tool calls
+    if (isset($choice['message']['tool_calls'])) {
+      $toolCalls = $choice['message']['tool_calls'];
       foreach ($toolCalls as $toolCall) {
         $functionName = $toolCall['function']['name'];
         $functionArgs = json_decode($toolCall['function']['arguments'], true);
@@ -182,9 +180,16 @@ class mod_moodlechatbot_external extends external_api
         // Execute the tool function
         $toolResult = self::execute_tool($functionName, $functionArgs);
 
-        // Append the tool result to the conversation
-        $botResponse .= "\n\nTool Result: " . $toolResult;
+        // Append the tool result to the response
+        $botResponse .= ($botResponse ? "\n\n" : "") . "Tool Result: " . $toolResult;
       }
+    }
+
+    // If we still don't have a response, throw an error
+    if (empty($botResponse)) {
+      $errorMessage = 'No content or valid tool calls in API response: ' . print_r($choice, true);
+      debugging($errorMessage, DEBUG_DEVELOPER);
+      throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot', '', null, $errorMessage);
     }
 
     return $botResponse;
@@ -214,8 +219,20 @@ class mod_moodlechatbot_external extends external_api
    */
   private static function get_course_info($courseId)
   {
-    // TODO: Implement actual course information retrieval
-    // For now, we'll return a placeholder message
-    return "Course information for course ID: $courseId (Placeholder)";
+    global $DB;
+
+    // Fetch course information from the database
+    $course = $DB->get_record('course', array('id' => $courseId), '*', MUST_EXIST);
+
+    // Prepare the course information string
+    $info = "Course ID: {$course->id}\n";
+    $info .= "Course Name: {$course->fullname}\n";
+    $info .= "Short Name: {$course->shortname}\n";
+    $info .= "Course Summary: " . strip_tags($course->summary) . "\n";
+    $info .= "Start Date: " . userdate($course->startdate) . "\n";
+    $info .= "End Date: " . ($course->enddate ? userdate($course->enddate) : "No end date") . "\n";
+
+    return $info;
   }
 }
+
