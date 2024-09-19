@@ -27,36 +27,19 @@ defined('MOODLE_INTERNAL') || die;
 
 require_once("$CFG->libdir/externallib.php");
 
-class mod_moodlechatbot_external extends external_api
-{
+class mod_moodlechatbot_external extends external_api {
 
-  /**
-   * Returns description of get_bot_response parameters
-   * @return external_function_parameters
-   */
-  public static function get_bot_response_parameters()
-  {
+  public static function get_bot_response_parameters() {
     return new external_function_parameters(
       array('message' => new external_value(PARAM_TEXT, 'The user message'))
     );
   }
 
-  /**
-   * Returns description of get_bot_response return values
-   * @return external_single_structure
-   */
-  public static function get_bot_response_returns()
-  {
+  public static function get_bot_response_returns() {
     return new external_value(PARAM_TEXT, 'The bot response');
   }
 
-  /**
-   * Get bot response
-   * @param string $message The user message
-   * @return string The bot response
-   */
-  public static function get_bot_response($message)
-  {
+  public static function get_bot_response($message) {
     global $CFG;
 
     // Parameter validation
@@ -97,7 +80,6 @@ class mod_moodlechatbot_external extends external_api
           ],
         ],
       ],
-      // Add more tools as needed
     ];
 
     $postFields = [
@@ -143,23 +125,13 @@ class mod_moodlechatbot_external extends external_api
     }
 
     // Process the response
-    $botResponse = self::process_response($response);
-
-    // Ensure the response is a plain text string
-    return strip_tags($botResponse);
+    return self::process_response($response);
   }
 
-  /**
-   * Process the API response
-   * @param string $response The raw API response
-   * @return string The processed response
-   */
-  private static function process_response($response)
-  {
-    // If it's a JSON response, try parsing it
+  private static function process_response($response) {
+    // Decode JSON response
     $data = json_decode($response, true);
 
-    // Improved error handling and debugging
     if (json_last_error() !== JSON_ERROR_NONE) {
       $errorMessage = 'JSON decode error: ' . json_last_error_msg();
       debugging($errorMessage, DEBUG_DEVELOPER);
@@ -192,42 +164,28 @@ class mod_moodlechatbot_external extends external_api
       return $data['choices'][0]['message']['content'];
     }
 
-    // If no valid response is found, throw an error
+    // No valid response
     $errorMessage = 'No valid response from API: ' . print_r($data, true);
     debugging($errorMessage, DEBUG_DEVELOPER);
     throw new moodle_exception('noresponse', 'mod_moodlechatbot', '', null, $errorMessage);
   }
 
-  /**
-   * Execute a tool function
-   * @param string $functionName The name of the function to execute
-   * @param array $args The arguments for the function
-   * @return string The result of the tool execution
-   */
-  private static function execute_tool($functionName, $args)
-  {
+  private static function execute_tool($functionName, $args) {
     switch ($functionName) {
       case 'get_course_info':
         return self::get_course_info($args['course_id']);
-        // Add cases for other tools as needed
       default:
         return "Unknown tool: $functionName";
     }
   }
 
-  /**
-   * Get course information
-   * @param int $courseId The ID of the course
-   * @return string Course information
-   */
-  private static function get_course_info($courseId)
-  {
+  private static function get_course_info($courseId) {
     global $DB;
 
-    // Fetch course information from the database
+    // Fetch course information
     $course = $DB->get_record('course', array('id' => $courseId), '*', MUST_EXIST);
 
-    // Prepare the course information string
+    // Return formatted course information
     $info = "Course ID: {$course->id}\n";
     $info .= "Course Name: {$course->fullname}\n";
     $info .= "Short Name: {$course->shortname}\n";
@@ -238,4 +196,3 @@ class mod_moodlechatbot_external extends external_api
     return $info;
   }
 }
-
