@@ -142,7 +142,24 @@ class mod_moodlechatbot_external extends external_api
       throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $httpCode, $errorMessage);
     }
 
-    // Decode the JSON response
+    // Check if the response is a tool call
+    if (strpos($response, '<tool_call>') !== false) {
+      // Extract the JSON content from the tool call
+      $jsonContent = strip_tags($response);
+      $data = json_decode($jsonContent, true);
+
+      if (json_last_error() !== JSON_ERROR_NONE) {
+        $errorMessage = 'JSON decode error in tool call: ' . json_last_error_msg();
+        debugging($errorMessage, DEBUG_DEVELOPER);
+        throw new moodle_exception('invalidjson', 'mod_moodlechatbot', '', null, $errorMessage);
+      }
+
+      // Execute the tool function
+      $toolResult = self::execute_tool($data['name'], $data['arguments']);
+      return "Tool Result: " . $toolResult;
+    }
+
+    // If it's not a tool call, proceed with normal JSON parsing
     $data = json_decode($response, true);
 
     // Log the decoded response for better understanding
@@ -235,3 +252,4 @@ class mod_moodlechatbot_external extends external_api
     return $info;
   }
 }
+
