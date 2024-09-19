@@ -22,26 +22,41 @@
  * @copyright  2024 Kaplan Open Learning
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
-class mod_moodlechatbot_external extends external_api {
+defined('MOODLE_INTERNAL') || die;
 
-  // Parameters for get_bot_response
-  public static function get_bot_response_parameters() {
+require_once("$CFG->libdir/externallib.php");
+
+class mod_moodlechatbot_external extends external_api
+{
+
+  /**
+   * Returns description of get_bot_response parameters
+   * @return external_function_parameters
+   */
+  public static function get_bot_response_parameters()
+  {
     return new external_function_parameters(
-      array(
-        'message' => new external_value(PARAM_TEXT, 'The user message to the chatbot'),
-      )
+      array('message' => new external_value(PARAM_TEXT, 'The user message'))
     );
   }
 
-  // Returns for get_bot_response
-  public static function get_bot_response_returns() {
-    return new external_value(PARAM_TEXT, 'The chatbot response');
+  /**
+   * Returns description of get_bot_response return values
+   * @return external_single_structure
+   */
+  public static function get_bot_response_returns()
+  {
+    return new external_value(PARAM_TEXT, 'The bot response');
   }
 
-  // Function to process the chatbot response
-  public static function get_bot_response($message) {
+  /**
+   * Get bot response
+   * @param string $message The user message
+   * @return string The bot response
+   */
+  public static function get_bot_response($message)
+  {
     global $CFG;
 
     // Parameter validation
@@ -82,6 +97,7 @@ class mod_moodlechatbot_external extends external_api {
           ],
         ],
       ],
+      // Add more tools as needed
     ];
 
     $postFields = [
@@ -126,72 +142,89 @@ class mod_moodlechatbot_external extends external_api {
       throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $httpCode, $errorMessage);
     }
 
-    // Process the response
-    return self::process_response($response);
-  }
-
-  // Process the API response and execute tool calls if necessary
-  private static function process_response($response) {
-    // Decode JSON response
+    // Decode the JSON response
     $data = json_decode($response, true);
 
+    // Log the decoded response for better understanding
+    debugging('Decoded API response: ' . print_r($data, true), DEBUG_DEVELOPER);
+
+    // Improved error handling and debugging
     if (json_last_error() !== JSON_ERROR_NONE) {
       $errorMessage = 'JSON decode error: ' . json_last_error_msg();
       debugging($errorMessage, DEBUG_DEVELOPER);
       throw new moodle_exception('invalidjson', 'mod_moodlechatbot', '', null, $errorMessage);
     }
 
-    // Check if the response includes tool calls
-    if (isset($data['choices'][0]['message']['tool_calls'])) {
-      $toolCalls = $data['choices'][0]['message']['tool_calls'];
-      $toolResults = [];
+    // Check if the 'choices' array exists
+    if (!isset($data['choices']) || !is_array($data['choices']) || empty($data['choices'])) {
+      $errorMessage = 'Unexpected API response structure: ' . print_r($data, true);
+      debugging($errorMessage, DEBUG_DEVELOPER);
+      throw new moodle_exception('invalidresponse', 'mod_moodlechatbot', '', null, $errorMessage);
+    }
 
+    $choice = $data['choices'][0];
+    $botResponse = '';
+
+    // Check if there's a content field or tool calls
+    if (isset($choice['message']['content'])) {
+      $botResponse = $choice['message']['content'];
+    }
+
+    // Handle tool calls
+    if (isset($choice['message']['tool_calls'])) {
+      $toolCalls = $choice['message']['tool_calls'];
       foreach ($toolCalls as $toolCall) {
         $functionName = $toolCall['function']['name'];
-        $arguments = json_decode($toolCall['function']['arguments'], true);
+        $functionArgs = json_decode($toolCall['function']['arguments'], true);
 
-        if (json_last_error() === JSON_ERROR_NONE) {
-          $toolResults[] = self::execute_tool($functionName, $arguments);
-        } else {
-          $errorMessage = 'JSON decode error in tool arguments: ' . json_last_error_msg();
-          debugging($errorMessage, DEBUG_DEVELOPER);
-          throw new moodle_exception('invalidtoolarguments', 'mod_moodlechatbot', '', null, $errorMessage);
-        }
+        // Execute the tool function
+        $toolResult = self::execute_tool($functionName, $functionArgs);
+
+        // Append the tool result to the response
+        $botResponse .= ($botResponse ? "\n\n" : "") . "Tool Result: " . $toolResult;
       }
-
-      // Return the processed tool results as plain text
-      return implode("\n\n", $toolResults);
     }
 
-    // If it's not a tool call, check for normal content
-    if (isset($data['choices'][0]['message']['content'])) {
-      return $data['choices'][0]['message']['content'];
+    // If we still don't have a response, throw an error
+    if (empty($botResponse)) {
+      $errorMessage = 'No content or valid tool calls in API response: ' . print_r($choice, true);
+      debugging($errorMessage, DEBUG_DEVELOPER);
+      throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot', '', null, $errorMessage);
     }
 
-    // No valid response
-    $errorMessage = 'No valid response from API: ' . print_r($data, true);
-    debugging($errorMessage, DEBUG_DEVELOPER);
-    throw new moodle_exception('noresponse', 'mod_moodlechatbot', '', null, $errorMessage);
+    return $botResponse;
   }
 
-  // Execute the tool function based on the name
-  private static function execute_tool($functionName, $args) {
+  /**
+   * Execute a tool function
+   * @param string $functionName The name of the function to execute
+   * @param array $args The arguments for the function
+   * @return string The result of the tool execution
+   */
+  private static function execute_tool($functionName, $args)
+  {
     switch ($functionName) {
       case 'get_course_info':
         return self::get_course_info($args['course_id']);
+        // Add cases for other tools as needed
       default:
         return "Unknown tool: $functionName";
     }
   }
 
-  // Fetch course information from the database
-  private static function get_course_info($courseId) {
+  /**
+   * Get course information
+   * @param int $courseId The ID of the course
+   * @return string Course information
+   */
+  private static function get_course_info($courseId)
+  {
     global $DB;
 
-    // Fetch course information
+    // Fetch course information from the database
     $course = $DB->get_record('course', array('id' => $courseId), '*', MUST_EXIST);
 
-    // Return formatted course information as plain text
+    // Prepare the course information string
     $info = "Course ID: {$course->id}\n";
     $info .= "Course Name: {$course->fullname}\n";
     $info .= "Short Name: {$course->shortname}\n";
@@ -199,6 +232,6 @@ class mod_moodlechatbot_external extends external_api {
     $info .= "Start Date: " . userdate($course->startdate) . "\n";
     $info .= "End Date: " . ($course->enddate ? userdate($course->enddate) : "No end date") . "\n";
 
-    return $info; // Return plain text instead of JSON
+    return $info;
   }
 }
