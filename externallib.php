@@ -115,7 +115,7 @@ class mod_moodlechatbot_external extends external_api
       $postFields['tool_choice'] = 'auto';
     }
 
-    // --- Start of modified section for tool call handling ---
+    // --- Modified section for tool call handling ---
 
     $botResponse = ''; // Initialize bot response
 
@@ -170,26 +170,27 @@ class mod_moodlechatbot_external extends external_api
 
       $choice = $data['choices'][0];
 
-
       // 1. Check for tool calls FIRST
       if (isset($choice['message']['tool_calls'])) {
         $toolCalls = $choice['message']['tool_calls'];
+        $toolResults = []; // Store results of tool calls
         foreach ($toolCalls as $toolCall) {
           $functionName = $toolCall['function']['name'];
           $functionArgs = json_decode($toolCall['function']['arguments'], true);
 
-          // Execute the tool function
-          $toolResult = self::execute_tool($functionName, $functionArgs);
-
-          // Construct the next message WITH the tool result
-          $nextMessage = [
-            'role' => 'user',
-            'content' => "Tool Result: " . $toolResult
-          ];
-          $postFields['messages'][] = $nextMessage;
+          // Execute the tool function and store the result
+          $toolResults[] = self::execute_tool($functionName, $functionArgs);
         }
 
-        // Continue to the next iteration of the loop to make another API call
+        // Construct the next message with ALL tool results
+        $nextMessageContent = implode("\n\n", $toolResults);
+        $nextMessage = [
+          'role' => 'user',
+          'content' => "Tool Result: \n" . $nextMessageContent
+        ];
+        $postFields['messages'][] = $nextMessage;
+
+        // Continue to the next iteration of the loop for further processing
         continue;
       } else if (isset($choice['message']['content'])) {
         // 2. If no tool calls, handle direct responses
@@ -204,8 +205,9 @@ class mod_moodlechatbot_external extends external_api
     }
     // --- End of modified section ---
 
-    return $botResponse;
+    return $botResponse; // Return the final bot response
   }
+
 
   /**
    * Execute a tool function
