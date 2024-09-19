@@ -165,7 +165,7 @@ class mod_moodlechatbot_external extends external_api
     $choice = $data['choices'][0];
     $botResponse = '';
 
-    // Check if there's a content field or tool calls
+    // Check if there's a content field
     if (isset($choice['message']['content'])) {
       $botResponse = $choice['message']['content'];
     }
