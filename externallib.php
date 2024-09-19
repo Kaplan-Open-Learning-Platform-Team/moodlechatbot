@@ -142,6 +142,20 @@ class mod_moodlechatbot_external extends external_api
       throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $httpCode, $errorMessage);
     }
 
+    // Process the response
+    $botResponse = self::process_response($response);
+
+    // Ensure the response is a plain text string
+    return strip_tags($botResponse);
+  }
+
+  /**
+   * Process the API response
+   * @param string $response The raw API response
+   * @return string The processed response
+   */
+  private static function process_response($response)
+  {
     // Check if the response is a tool call
     if (strpos($response, '<tool_call>') !== false) {
       // Extract the JSON content from the tool call
@@ -155,8 +169,7 @@ class mod_moodlechatbot_external extends external_api
       }
 
       // Execute the tool function
-      $toolResult = self::execute_tool($data['name'], $data['arguments']);
-      return "Tool Result: " . $toolResult;
+      return self::execute_tool($data['name'], $data['arguments']);
     }
 
     // If it's not a tool call, proceed with normal JSON parsing
@@ -180,36 +193,29 @@ class mod_moodlechatbot_external extends external_api
     }
 
     $choice = $data['choices'][0];
-    $botResponse = '';
 
     // Check if there's a content field
     if (isset($choice['message']['content'])) {
-      $botResponse = $choice['message']['content'];
+      return $choice['message']['content'];
     }
 
     // Handle tool calls
     if (isset($choice['message']['tool_calls'])) {
-      $toolCalls = $choice['message']['tool_calls'];
-      foreach ($toolCalls as $toolCall) {
+      $toolResults = [];
+      foreach ($choice['message']['tool_calls'] as $toolCall) {
         $functionName = $toolCall['function']['name'];
         $functionArgs = json_decode($toolCall['function']['arguments'], true);
 
         // Execute the tool function
-        $toolResult = self::execute_tool($functionName, $functionArgs);
-
-        // Append the tool result to the response
-        $botResponse .= ($botResponse ? "\n\n" : "") . "Tool Result: " . $toolResult;
+        $toolResults[] = self::execute_tool($functionName, $functionArgs);
       }
+      return implode("\n\n", $toolResults);
     }
 
     // If we still don't have a response, throw an error
-    if (empty($botResponse)) {
-      $errorMessage = 'No content or valid tool calls in API response: ' . print_r($choice, true);
-      debugging($errorMessage, DEBUG_DEVELOPER);
-      throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot', '', null, $errorMessage);
-    }
-
-    return $botResponse;
+    $errorMessage = 'No content or valid tool calls in API response: ' . print_r($choice, true);
+    debugging($errorMessage, DEBUG_DEVELOPER);
+    throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot', '', null, $errorMessage);
   }
 
   /**
@@ -252,4 +258,3 @@ class mod_moodlechatbot_external extends external_api
     return $info;
   }
 }
-
