@@ -210,8 +210,6 @@ class mod_moodlechatbot_external extends external_api
    */
   private static function get_course_info($courseId)
   {
-    global $DB;
-    $course = $DB->get_record('course', array('id' => $courseId), '*', MUST_EXIST);
-    return "Course Name: {$course->fullname}, Short Name: {$course->shortname}, Start Date: " . userdate($course->startdate);
-  }
+    return "the get course function was called"
+ }
 }
