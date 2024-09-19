@@ -156,27 +156,8 @@ class mod_moodlechatbot_external extends external_api
    */
   private static function process_response($response)
   {
-    // Check if the response is a tool call
-    if (strpos($response, '<tool_call>') !== false) {
-      // Extract the JSON content from the tool call
-      $jsonContent = strip_tags($response);
-      $data = json_decode($jsonContent, true);
-
-      if (json_last_error() !== JSON_ERROR_NONE) {
-        $errorMessage = 'JSON decode error in tool call: ' . json_last_error_msg();
-        debugging($errorMessage, DEBUG_DEVELOPER);
-        throw new moodle_exception('invalidjson', 'mod_moodlechatbot', '', null, $errorMessage);
-      }
-
-      // Execute the tool function
-      return self::execute_tool($data['name'], $data['arguments']);
-    }
-
-    // If it's not a tool call, proceed with normal JSON parsing
+    // If it's a JSON response, try parsing it
     $data = json_decode($response, true);
-
-    // Log the decoded response for better understanding
-    debugging('Decoded API response: ' . print_r($data, true), DEBUG_DEVELOPER);
 
     // Improved error handling and debugging
     if (json_last_error() !== JSON_ERROR_NONE) {
@@ -185,37 +166,36 @@ class mod_moodlechatbot_external extends external_api
       throw new moodle_exception('invalidjson', 'mod_moodlechatbot', '', null, $errorMessage);
     }
 
-    // Check if the 'choices' array exists
-    if (!isset($data['choices']) || !is_array($data['choices']) || empty($data['choices'])) {
-      $errorMessage = 'Unexpected API response structure: ' . print_r($data, true);
-      debugging($errorMessage, DEBUG_DEVELOPER);
-      throw new moodle_exception('invalidresponse', 'mod_moodlechatbot', '', null, $errorMessage);
-    }
-
-    $choice = $data['choices'][0];
-
-    // Check if there's a content field
-    if (isset($choice['message']['content'])) {
-      return $choice['message']['content'];
-    }
-
-    // Handle tool calls
-    if (isset($choice['message']['tool_calls'])) {
+    // Check if the response includes tool calls
+    if (isset($data['choices'][0]['message']['tool_calls'])) {
+      $toolCalls = $data['choices'][0]['message']['tool_calls'];
       $toolResults = [];
-      foreach ($choice['message']['tool_calls'] as $toolCall) {
-        $functionName = $toolCall['function']['name'];
-        $functionArgs = json_decode($toolCall['function']['arguments'], true);
 
-        // Execute the tool function
-        $toolResults[] = self::execute_tool($functionName, $functionArgs);
+      foreach ($toolCalls as $toolCall) {
+        $functionName = $toolCall['function']['name'];
+        $arguments = json_decode($toolCall['function']['arguments'], true);
+
+        if (json_last_error() === JSON_ERROR_NONE) {
+          $toolResults[] = self::execute_tool($functionName, $arguments);
+        } else {
+          $errorMessage = 'JSON decode error in tool arguments: ' . json_last_error_msg();
+          debugging($errorMessage, DEBUG_DEVELOPER);
+          throw new moodle_exception('invalidtoolarguments', 'mod_moodlechatbot', '', null, $errorMessage);
+        }
       }
+
       return implode("\n\n", $toolResults);
     }
 
-    // If we still don't have a response, throw an error
-    $errorMessage = 'No content or valid tool calls in API response: ' . print_r($choice, true);
+    // If it's not a tool call, check for normal content
+    if (isset($data['choices'][0]['message']['content'])) {
+      return $data['choices'][0]['message']['content'];
+    }
+
+    // If no valid response is found, throw an error
+    $errorMessage = 'No valid response from API: ' . print_r($data, true);
     debugging($errorMessage, DEBUG_DEVELOPER);
-    throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot', '', null, $errorMessage);
+    throw new moodle_exception('noresponse', 'mod_moodlechatbot', '', null, $errorMessage);
   }
 
   /**
@@ -258,3 +238,4 @@ class mod_moodlechatbot_external extends external_api
     return $info;
   }
 }
+
