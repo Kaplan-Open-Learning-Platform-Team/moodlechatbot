@@ -22,23 +22,25 @@
  * @copyright  2024 Kaplan Open Learning
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
-defined('MOODLE_INTERNAL') || die;
-
-require_once("$CFG->libdir/externallib.php");
+defined('MOODLE_INTERNAL') || die();
 
 class mod_moodlechatbot_external extends external_api {
 
+  // Parameters for get_bot_response
   public static function get_bot_response_parameters() {
     return new external_function_parameters(
-      array('message' => new external_value(PARAM_TEXT, 'The user message'))
+      array(
+        'message' => new external_value(PARAM_TEXT, 'The user message to the chatbot'),
+      )
     );
   }
 
+  // Returns for get_bot_response
   public static function get_bot_response_returns() {
-    return new external_value(PARAM_TEXT, 'The bot response');
+    return new external_value(PARAM_TEXT, 'The chatbot response');
   }
 
+  // Function to process the chatbot response
   public static function get_bot_response($message) {
     global $CFG;
 
@@ -128,6 +130,7 @@ class mod_moodlechatbot_external extends external_api {
     return self::process_response($response);
   }
 
+  // Process the API response and execute tool calls if necessary
   private static function process_response($response) {
     // Decode JSON response
     $data = json_decode($response, true);
@@ -156,6 +159,7 @@ class mod_moodlechatbot_external extends external_api {
         }
       }
 
+      // Return the processed tool results as plain text
       return implode("\n\n", $toolResults);
     }
 
@@ -170,6 +174,7 @@ class mod_moodlechatbot_external extends external_api {
     throw new moodle_exception('noresponse', 'mod_moodlechatbot', '', null, $errorMessage);
   }
 
+  // Execute the tool function based on the name
   private static function execute_tool($functionName, $args) {
     switch ($functionName) {
       case 'get_course_info':
@@ -179,13 +184,14 @@ class mod_moodlechatbot_external extends external_api {
     }
   }
 
+  // Fetch course information from the database
   private static function get_course_info($courseId) {
     global $DB;
 
     // Fetch course information
     $course = $DB->get_record('course', array('id' => $courseId), '*', MUST_EXIST);
 
-    // Return formatted course information
+    // Return formatted course information as plain text
     $info = "Course ID: {$course->id}\n";
     $info .= "Course Name: {$course->fullname}\n";
     $info .= "Short Name: {$course->shortname}\n";
@@ -193,6 +199,6 @@ class mod_moodlechatbot_external extends external_api {
     $info .= "Start Date: " . userdate($course->startdate) . "\n";
     $info .= "End Date: " . ($course->enddate ? userdate($course->enddate) : "No end date") . "\n";
 
-    return $info;
+    return $info; // Return plain text instead of JSON
   }
 }
