@@ -210,6 +210,6 @@ class mod_moodlechatbot_external extends external_api
    */
   private static function get_course_info($courseId)
   {
-    return "the get course function was called"
- }
+    return "the get course function was called";
+  }
 }
