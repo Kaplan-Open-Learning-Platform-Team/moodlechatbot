@@ -92,7 +92,7 @@ class mod_moodlechatbot_external extends external_api
     self::validate_context($context);
 
     // Capability check
-    require_capability('mod_moodlechatbot:use', $context);
+    require_capability('mod/moodlechatbot:use', $context);
 
     self::init_groq();
 
