@@ -155,14 +155,8 @@ class mod_moodlechatbot_external extends external_api
             $functionName = $toolCall['function']['name'];
             $functionArgs = json_decode($toolCall['function']['arguments'], true);
 
-            if ($functionName === 'get_course_info' && isset($functionArgs['course_id'])) {
-              // Execute the get_course_info function and collect the result
-              $courseInfo = self::get_course_info($functionArgs['course_id']);
-              $toolResults[] = $courseInfo;
-            } else {
-              // Handle unknown tool case
-              $toolResults[] = "Unknown tool: $functionName";
-            }
+            // Execute the tool based on the name and arguments
+            $toolResults[] = self::execute_tool($functionName, $functionArgs);
           }
 
           // Append the results of the tool execution to the bot's response
