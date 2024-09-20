@@ -122,7 +122,11 @@ class mod_moodlechatbot_external extends external_api
         'function' => [
           'name' => 'get_user_enrolled_courses',
           'description' => 'Get a list of courses a user is enrolled in',
-          'parameters' => [], // No parameters needed
+          'parameters' => [
+            'type' => 'object',
+            'properties' => [],
+            'required' => [],
+          ],
         ],
       ],
     ];
