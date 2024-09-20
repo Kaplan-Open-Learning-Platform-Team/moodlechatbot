@@ -259,7 +259,7 @@ class mod_moodlechatbot_external extends external_api
     // Prepare the course information string
     $courseList = "Courses for User ID $userId:\n";
     foreach ($courses as $course) {
-      $courseList .= "- {$course->fullname} (ID: {$course->id})\n";
+      $courseList .= "- {$course->fullname} (ID: {$course->id})\n"; // Output the full name
     }
 
     return trim($courseList);
