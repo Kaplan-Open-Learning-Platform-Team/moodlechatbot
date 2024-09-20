@@ -82,10 +82,10 @@ class mod_moodlechatbot_external extends external_api
    */
   public static function get_bot_response($message)
   {
-    global $CFG;
+    global $USER;
 
     // Parameter validation
-    $params = self::validate_parameters(self::get_bot_response_parameters(), array('message' => $message));
+    $params = self::validate_parameters(self::get_bot_response_parameters(), ['message' => $message]);
 
     // Context validation
     $context = context_system::instance();
@@ -117,7 +117,14 @@ class mod_moodlechatbot_external extends external_api
           ],
         ],
       ],
-      // Add more tools as needed
+      [
+        'type' => 'function',
+        'function' => [
+          'name' => 'get_user_enrolled_courses',
+          'description' => 'Get a list of courses a user is enrolled in',
+          'parameters' => [], // No parameters needed
+        ],
+      ],
     ];
 
     $messages = [
@@ -142,7 +149,6 @@ class mod_moodlechatbot_external extends external_api
         }
 
         $response = self::$groq->chat()->completions()->create($completionParams);
-
         $choice = $response['choices'][0];
 
         // Check if there are tool calls in the response
@@ -155,6 +161,11 @@ class mod_moodlechatbot_external extends external_api
             $functionName = $toolCall['function']['name'];
             $functionArgs = json_decode($toolCall['function']['arguments'], true);
 
+            // Automatically pass the current user ID for enrolled courses
+            if ($functionName === 'get_user_enrolled_courses') {
+              $functionArgs = ['user_id' => $USER->id]; // Use the current user's ID
+            }
+
             // Execute the tool function with the arguments
             $toolResults[] = self::execute_tool($functionName, $functionArgs);
           }
@@ -162,7 +173,7 @@ class mod_moodlechatbot_external extends external_api
           // Append the results of the tool execution to the bot's response
           $botResponse .= implode("\n\n", $toolResults);
 
-          // Update the conversation with the tool results so that the bot can proceed
+          // Update the conversation with the tool results
           $messages[] = [
             'role' => 'user',
             'content' => "Tool Result: \n" . implode("\n\n", $toolResults)
@@ -180,7 +191,7 @@ class mod_moodlechatbot_external extends external_api
       throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $e->getCode(), $e->getMessage());
     }
 
-    // Ensure the return is plain text, as required by Moodle's external API system
+    // Ensure the return is plain text
     return clean_param($botResponse, PARAM_TEXT);
   }
 
@@ -195,7 +206,8 @@ class mod_moodlechatbot_external extends external_api
     switch ($functionName) {
       case 'get_course_info':
         return self::get_course_info($args['course_id']);
-        // Add cases for other tools as needed
+      case 'get_user_enrolled_courses':
+        return self::get_user_enrolled_courses($args['user_id']);
       default:
         return "Unknown tool: $functionName";
     }
@@ -221,6 +233,32 @@ class mod_moodlechatbot_external extends external_api
     $info .= "Start Date: " . userdate($course->startdate) . "\n";
     $info .= "End Date: " . ($course->enddate ? userdate($course->enddate) : "No end date") . "\n";
 
-    return $info;
+    return trim($info);
+  }
+
+  /**
+   * Get a list of courses a user is enrolled in
+   * @param int $userId The ID of the user
+   * @return string List of enrolled courses
+   */
+  private static function get_user_enrolled_courses($userId)
+  {
+    global $DB;
+
+    // Fetch user courses
+    $courses = enrol_get_users_courses($userId);
+
+    if (empty($courses)) {
+      return "No courses found for user ID: $userId.";
+    }
+
+    // Prepare the course information string
+    $courseList = "Courses for User ID $userId:\n";
+    foreach ($courses as $course) {
+      $courseList .= "- {$course->fullname} (ID: {$course->id})\n";
+    }
+
+    return trim($courseList);
   }
 }
+
