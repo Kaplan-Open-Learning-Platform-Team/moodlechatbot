@@ -96,7 +96,7 @@ class mod_moodlechatbot_external extends external_api
     debugging('Validated context: ' . $context->id, DEBUG_DEVELOPER);
 
     // Capability check
-    require_capability('mod_moodlechatbot:use', $context);
+    require_capability('mod/moodlechatbot:use', $context);
     debugging('User has the required capability.', DEBUG_DEVELOPER);
 
     self::init_groq();
