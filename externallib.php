@@ -92,7 +92,7 @@ class mod_moodlechatbot_external extends external_api
     self::validate_context($context);
 
     // Capability check
-    require_capability('mod/moodlechatbot:use', $context);
+    require_capability('mod_moodlechatbot:use', $context);
 
     self::init_groq();
 
@@ -155,7 +155,7 @@ class mod_moodlechatbot_external extends external_api
             $functionName = $toolCall['function']['name'];
             $functionArgs = json_decode($toolCall['function']['arguments'], true);
 
-            // Execute the tool based on the name and arguments
+            // Execute the tool function with the arguments
             $toolResults[] = self::execute_tool($functionName, $functionArgs);
           }
 
