@@ -145,6 +145,7 @@ class mod_moodlechatbot_external extends external_api
 
         $choice = $response['choices'][0];
 
+        // Process tool calls and append the result to the response
         if (isset($choice['message']['tool_calls'])) {
           $toolCalls = $choice['message']['tool_calls'];
           $toolResults = [];
@@ -153,13 +154,11 @@ class mod_moodlechatbot_external extends external_api
             $functionArgs = json_decode($toolCall['function']['arguments'], true);
             $toolResults[] = self::execute_tool($functionName, $functionArgs);
           }
-          $nextMessageContent = implode("\n\n", $toolResults);
-          $messages[] = [
-            'role' => 'user',
-            'content' => "Tool Result: \n" . $nextMessageContent
-          ];
+
+          // Append tool results as plain text to the bot response
+          $botResponse .= implode("\n\n", $toolResults);
         } else if (isset($choice['message']['content'])) {
-          $botResponse = $choice['message']['content'];
+          $botResponse .= $choice['message']['content'];
           break;
         } else {
           throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot');
@@ -170,7 +169,8 @@ class mod_moodlechatbot_external extends external_api
       throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $e->getCode(), $e->getMessage());
     }
 
-    return $botResponse;
+    // Ensure the return is plain text, as required by Moodle's external API system
+    return clean_param($botResponse, PARAM_TEXT);
   }
 
   /**
