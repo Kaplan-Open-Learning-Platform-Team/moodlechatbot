@@ -53,6 +53,7 @@ class mod_moodlechatbot_external extends external_api
     }
 
     self::$groq = new Groq($apiKey);
+    debugging('Initialized Groq client with API key.', DEBUG_DEVELOPER);
   }
 
   /**
@@ -85,18 +86,23 @@ class mod_moodlechatbot_external extends external_api
     global $USER;
 
     // Parameter validation
+    debugging('Received message: ' . $message, DEBUG_DEVELOPER);
     $params = self::validate_parameters(self::get_bot_response_parameters(), ['message' => $message]);
+    debugging('Validated parameters: ' . json_encode($params), DEBUG_DEVELOPER);
 
     // Context validation
     $context = context_system::instance();
     self::validate_context($context);
+    debugging('Validated context: ' . $context->id, DEBUG_DEVELOPER);
 
     // Capability check
-    require_capability('mod/moodlechatbot:use', $context);
+    require_capability('mod_moodlechatbot:use', $context);
+    debugging('User has the required capability.', DEBUG_DEVELOPER);
 
     self::init_groq();
 
     $enableTools = get_config('mod_moodlechatbot', 'enabletools');
+    debugging('Tools enabled: ' . ($enableTools ? 'Yes' : 'No'), DEBUG_DEVELOPER);
 
     // Define tools
     $tools = [
@@ -140,6 +146,7 @@ class mod_moodlechatbot_external extends external_api
 
     try {
       while (true) {
+        debugging('Preparing to send message to Groq API.', DEBUG_DEVELOPER);
         $completionParams = [
           'model' => 'llama3-groq-70b-8192-tool-use-preview',
           'messages' => $messages,
@@ -152,39 +159,40 @@ class mod_moodlechatbot_external extends external_api
           $completionParams['tool_choice'] = 'auto';
         }
 
+        debugging('Completion parameters: ' . json_encode($completionParams), DEBUG_DEVELOPER);
         $response = self::$groq->chat()->completions()->create($completionParams);
+        debugging('Received response from Groq API: ' . json_encode($response), DEBUG_DEVELOPER);
         $choice = $response['choices'][0];
 
-        // Check if there are tool calls in the response
+        // Check for tool calls
         if (isset($choice['message']['tool_calls'])) {
           $toolCalls = $choice['message']['tool_calls'];
           $toolResults = [];
+          debugging('Tool calls detected: ' . json_encode($toolCalls), DEBUG_DEVELOPER);
 
-          // Loop through each tool call and execute the corresponding function
           foreach ($toolCalls as $toolCall) {
             $functionName = $toolCall['function']['name'];
             $functionArgs = json_decode($toolCall['function']['arguments'], true);
+            debugging('Executing tool: ' . $functionName . ' with arguments: ' . json_encode($functionArgs), DEBUG_DEVELOPER);
 
             // Automatically pass the current user ID for enrolled courses
             if ($functionName === 'get_user_enrolled_courses') {
-              $functionArgs = ['user_id' => $USER->id]; // Use the current user's ID
+              $functionArgs = ['user_id' => $USER->id];
             }
 
-            // Execute the tool function with the arguments
+            // Execute the tool function
             $toolResults[] = self::execute_tool($functionName, $functionArgs);
           }
 
-          // Append the results of the tool execution to the bot's response
           $botResponse .= implode("\n\n", $toolResults);
-
-          // Update the conversation with the tool results
           $messages[] = [
             'role' => 'user',
             'content' => "Tool Result: \n" . implode("\n\n", $toolResults)
           ];
+          debugging('Tool results added to messages.', DEBUG_DEVELOPER);
         } else if (isset($choice['message']['content'])) {
-          // If there's no tool call, return the content from the chatbot
           $botResponse .= $choice['message']['content'];
+          debugging('Bot response received: ' . $choice['message']['content'], DEBUG_DEVELOPER);
           break;
         } else {
           throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot');
@@ -196,6 +204,7 @@ class mod_moodlechatbot_external extends external_api
     }
 
     // Ensure the return is plain text
+    debugging('Final bot response: ' . $botResponse, DEBUG_DEVELOPER);
     return clean_param($botResponse, PARAM_TEXT);
   }
 
@@ -207,6 +216,7 @@ class mod_moodlechatbot_external extends external_api
    */
   private static function execute_tool($functionName, $args)
   {
+    debugging('Executing tool function: ' . $functionName . ' with arguments: ' . json_encode($args), DEBUG_DEVELOPER);
     switch ($functionName) {
       case 'get_course_info':
         return self::get_course_info($args['course_id']);
@@ -228,6 +238,7 @@ class mod_moodlechatbot_external extends external_api
 
     // Fetch course information from the database
     $course = $DB->get_record('course', array('id' => $courseId), '*', MUST_EXIST);
+    debugging('Fetched course info: ' . json_encode($course), DEBUG_DEVELOPER);
 
     // Prepare the course information string
     $info = "Course ID: {$course->id}\n";
@@ -251,6 +262,7 @@ class mod_moodlechatbot_external extends external_api
 
     // Fetch user courses
     $courses = enrol_get_users_courses($userId);
+    debugging('Fetched courses for user ID ' . $userId . ': ' . json_encode($courses), DEBUG_DEVELOPER);
 
     if (empty($courses)) {
       return "No courses found for user ID: $userId.";
@@ -265,4 +277,3 @@ class mod_moodlechatbot_external extends external_api
     return trim($courseList);
   }
 }
-
