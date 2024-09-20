@@ -26,9 +26,26 @@
 defined('MOODLE_INTERNAL') || die;
 
 require_once("$CFG->libdir/externallib.php");
+require_once($CFG->dirroot . '/vendor/autoload.php');
+
+use LucianoTonet\GroqPHP\Groq;
+use LucianoTonet\GroqPHP\GroqException;
 
 class mod_moodlechatbot_external extends external_api
 {
+  private static $groq;
+
+  /**
+   * Initialize the Groq client
+   */
+  private static function init_groq()
+  {
+    $apiKey = get_config('mod_moodlechatbot', 'apikey');
+    if (empty($apiKey)) {
+      throw new moodle_exception('apikeyerror', 'mod_moodlechatbot');
+    }
+    self::$groq = new Groq(['api_key' => $apiKey]);
+  }
 
   /**
    * Returns description of get_bot_response parameters
@@ -69,14 +86,9 @@ class mod_moodlechatbot_external extends external_api
     // Capability check
     require_capability('mod/moodlechatbot:use', $context);
 
-    $apiKey = get_config('mod_moodlechatbot', 'apikey');
+    self::init_groq();
+
     $enableTools = get_config('mod_moodlechatbot', 'enabletools');
-
-    if (empty($apiKey)) {
-      throw new moodle_exception('apikeyerror', 'mod_moodlechatbot');
-    }
-
-    $apiUrl = 'https://api.groq.com/openai/v1/chat/completions';
 
     // Define tools
     $tools = [
@@ -100,114 +112,58 @@ class mod_moodlechatbot_external extends external_api
       // Add more tools as needed
     ];
 
-    $postFields = [
-      'model' => 'llama3-groq-70b-8192-tool-use-preview',
-      'messages' => [
-        ['role' => 'system', 'content' => 'You are a helpful assistant in a Moodle learning environment.'],
-        ['role' => 'user', 'content' => $params['message']]
-      ],
-      'max_tokens' => 2000, // Increased token limit
-      'temperature' => 0.7
+    $messages = [
+      ['role' => 'system', 'content' => 'You are a helpful assistant in a Moodle learning environment.'],
+      ['role' => 'user', 'content' => $params['message']]
     ];
 
-    if ($enableTools) {
-      $postFields['tools'] = $tools;
-      $postFields['tool_choice'] = 'auto';
-    }
+    $botResponse = '';
 
-    // --- Modified section for tool call handling ---
-
-    $botResponse = ''; // Initialize bot response
-
-    while (true) { // Loop to handle potential multiple tool calls
-
-      $ch = curl_init($apiUrl);
-      curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-      curl_setopt($ch, CURLOPT_POST, true);
-      curl_setopt($ch, CURLOPT_HTTPHEADER, [
-        'Content-Type: application/json',
-        'Authorization: Bearer ' . $apiKey
-      ]);
-      curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postFields));
-
-      $response = curl_exec($ch);
-      $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-      // Log raw API response for debugging
-      debugging('Raw API response: ' . $response, DEBUG_DEVELOPER);
-
-      curl_close($ch);
-
-      // Check for HTTP errors
-      if ($httpCode !== 200) {
-        $errorMessage = 'API Error: HTTP Code ' . $httpCode;
-        if ($httpCode === 401) {
-          $errorMessage .= ' - API authentication failed. Please check your Groq API key.';
-        }
-        debugging($errorMessage, DEBUG_DEVELOPER);
-        throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $httpCode, $errorMessage);
-      }
-
-      // Decode the JSON response
-      $data = json_decode($response, true);
-
-      // Log the decoded response for better understanding
-      debugging('Decoded API response: ' . print_r($data, true), DEBUG_DEVELOPER);
-
-      // Improved error handling and debugging
-      if (json_last_error() !== JSON_ERROR_NONE) {
-        $errorMessage = 'JSON decode error: ' . json_last_error_msg();
-        debugging($errorMessage, DEBUG_DEVELOPER);
-        throw new moodle_exception('invalidjson', 'mod_moodlechatbot', '', null, $errorMessage);
-      }
-
-      // Check if the 'choices' array exists
-      if (!isset($data['choices']) || !is_array($data['choices']) || empty($data['choices'])) {
-        $errorMessage = 'Unexpected API response structure: ' . print_r($data, true);
-        debugging($errorMessage, DEBUG_DEVELOPER);
-        throw new moodle_exception('invalidresponse', 'mod_moodlechatbot', '', null, $errorMessage);
-      }
-
-      $choice = $data['choices'][0];
-
-      // 1. Check for tool calls FIRST
-      if (isset($choice['message']['tool_calls'])) {
-        $toolCalls = $choice['message']['tool_calls'];
-        $toolResults = []; // Store results of tool calls
-        foreach ($toolCalls as $toolCall) {
-          $functionName = $toolCall['function']['name'];
-          $functionArgs = json_decode($toolCall['function']['arguments'], true);
-
-          // Execute the tool function and store the result
-          $toolResults[] = self::execute_tool($functionName, $functionArgs);
-        }
-
-        // Construct the next message with ALL tool results
-        $nextMessageContent = implode("\n\n", $toolResults);
-        $nextMessage = [
-          'role' => 'user',
-          'content' => "Tool Result: \n" . $nextMessageContent
+    try {
+      while (true) {
+        $completionParams = [
+          'model' => 'llama3-groq-70b-8192-tool-use-preview',
+          'messages' => $messages,
+          'max_tokens' => 2000,
+          'temperature' => 0.7
         ];
-        $postFields['messages'][] = $nextMessage;
 
-        // Continue to the next iteration of the loop for further processing
-        continue;
-      } else if (isset($choice['message']['content'])) {
-        // 2. If no tool calls, handle direct responses
-        $botResponse = $choice['message']['content'];
-        break; // Exit the loop if we have a direct response
-      } else {
-        // 3. Handle cases where there's no content or tool call (error)
-        $errorMessage = 'No content or valid tool calls in API response: ' . print_r($choice, true);
-        debugging($errorMessage, DEBUG_DEVELOPER);
-        throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot', '', null, $errorMessage);
+        if ($enableTools) {
+          $completionParams['tools'] = $tools;
+          $completionParams['tool_choice'] = 'auto';
+        }
+
+        $response = self::$groq->chat()->completions()->create($completionParams);
+
+        $choice = $response['choices'][0];
+
+        if (isset($choice['message']['tool_calls'])) {
+          $toolCalls = $choice['message']['tool_calls'];
+          $toolResults = [];
+          foreach ($toolCalls as $toolCall) {
+            $functionName = $toolCall['function']['name'];
+            $functionArgs = json_decode($toolCall['function']['arguments'], true);
+            $toolResults[] = self::execute_tool($functionName, $functionArgs);
+          }
+          $nextMessageContent = implode("\n\n", $toolResults);
+          $messages[] = [
+            'role' => 'user',
+            'content' => "Tool Result: \n" . $nextMessageContent
+          ];
+        } else if (isset($choice['message']['content'])) {
+          $botResponse = $choice['message']['content'];
+          break;
+        } else {
+          throw new moodle_exception('nocontentortoolcalls', 'mod_moodlechatbot');
+        }
       }
+    } catch (GroqException $e) {
+      debugging('Groq API Error: ' . $e->getMessage(), DEBUG_DEVELOPER);
+      throw new moodle_exception('apierror', 'mod_moodlechatbot', '', $e->getCode(), $e->getMessage());
     }
-    // --- End of modified section ---
 
-    return $botResponse; // Return the final bot response
+    return $botResponse;
   }
-
 
   /**
    * Execute a tool function
