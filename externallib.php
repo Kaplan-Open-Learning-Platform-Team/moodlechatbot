@@ -25,8 +25,15 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-require_once("$CFG->libdir/externallib.php");
-require_once($CFG->dirroot . '/vendor/autoload.php');
+require_once($CFG->libdir . "/externallib.php");
+
+// Include Composer autoloader
+$composerAutoload = $CFG->dirroot . '/vendor/autoload.php';
+if (file_exists($composerAutoload)) {
+  require_once($composerAutoload);
+} else {
+  throw new moodle_exception('composerautloaderror', 'mod_moodlechatbot');
+}
 
 use LucianoTonet\GroqPHP\Groq;
 use LucianoTonet\GroqPHP\GroqException;
@@ -44,6 +51,7 @@ class mod_moodlechatbot_external extends external_api
     if (empty($apiKey)) {
       throw new moodle_exception('apikeyerror', 'mod_moodlechatbot');
     }
+
     self::$groq = new Groq(['api_key' => $apiKey]);
   }
 
