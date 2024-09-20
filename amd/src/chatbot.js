@@ -25,7 +25,7 @@ const Selectors = {
 const addMessageToChat = (sender, message) => {
   const messagesContainer = document.querySelector(Selectors.messages);
   const messageElement = document.createElement('div');
-  messageElement.classList.add('message', ${ sender } - message);
+  messageElement.classList.add('message', `${sender}`, message);
   messageElement.textContent = message;
   messagesContainer.appendChild(messageElement);
   messagesContainer.scrollTop = messagesContainer.scrollHeight;
@@ -77,7 +77,7 @@ const sendMessage = () => {
 
         // Check if there's a tool result and add it to the chat.
         if (toolResult) {
-          addMessageToChat('tool', Tool Result: ${ toolResult });
+          addMessageToChat('tool', `Tool Result: ${toolResult}`);
         }
       })
       .catch(error => {
