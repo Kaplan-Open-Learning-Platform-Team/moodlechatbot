@@ -28,7 +28,7 @@ defined('MOODLE_INTERNAL') || die;
 require_once($CFG->libdir . "/externallib.php");
 
 // Include Composer autoloader
-$composerAutoload = $CFG->dirroot . '/vendor/autoload.php';
+$composerAutoload = $CFG->dirroot . '/mod/moodlechatbot/vendor/autoload.php';
 if (file_exists($composerAutoload)) {
   require_once($composerAutoload);
 } else {
