@@ -52,7 +52,7 @@ class mod_moodlechatbot_external extends external_api
       throw new moodle_exception('apikeyerror', 'mod_moodlechatbot');
     }
 
-    self::$groq = new Groq(['api_key' => $apiKey]);
+    self::$groq = new Groq($apiKey);
   }
 
   /**
