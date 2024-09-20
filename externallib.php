@@ -145,19 +145,39 @@ class mod_moodlechatbot_external extends external_api
 
         $choice = $response['choices'][0];
 
-        // Process tool calls and append the result to the response
+        // Check if there are tool calls in the response
         if (isset($choice['message']['tool_calls'])) {
           $toolCalls = $choice['message']['tool_calls'];
           $toolResults = [];
+
+          // Loop through each tool call and execute the corresponding function
           foreach ($toolCalls as $toolCall) {
             $functionName = $toolCall['function']['name'];
-            $functionArgs = json_decode($toolCall['function']['arguments'], true);
-            $toolResults[] = self::execute_tool($functionName, $functionArgs);
+            $functionArgs = $toolCall['function']['arguments'];
+
+            // Decode the arguments and execute the corresponding tool
+            $decodedArgs = json_decode($functionArgs, true);
+
+            if ($functionName === 'get_course_info') {
+              // Execute the get_course_info function and collect the result
+              $courseInfo = self::get_course_info($decodedArgs['course_id']);
+              $toolResults[] = $courseInfo;
+            } else {
+              // Handle unknown tool case
+              $toolResults[] = "Unknown tool: $functionName";
+            }
           }
 
-          // Append tool results as plain text to the bot response
+          // Append the results of the tool execution to the bot's response
           $botResponse .= implode("\n\n", $toolResults);
+
+          // Update the conversation with the tool results so that the bot can proceed
+          $messages[] = [
+            'role' => 'user',
+            'content' => "Tool Result: \n" . implode("\n\n", $toolResults)
+          ];
         } else if (isset($choice['message']['content'])) {
+          // If there's no tool call, return the content from the chatbot
           $botResponse .= $choice['message']['content'];
           break;
         } else {
