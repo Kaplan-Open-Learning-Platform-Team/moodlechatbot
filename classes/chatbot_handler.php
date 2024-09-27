@@ -10,7 +10,7 @@ class chatbot_handler {
     private $groq_api_url = 'https://api.groq.com/openai/v1/chat/completions';
 
     public function __construct() {
-        $this->groq_api_key = get_config('moodlechatbot', 'groq_api_key');
+        $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
     }
 
     public function handleQuery($message) {
