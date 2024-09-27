@@ -25,14 +25,22 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$string['pluginname'] = 'Moodle Chat Bot';
-$string['modulename'] = 'Moodle Chat Bot';
-$string['pluginadministration'] = 'Moodle Chat Bot Administration';
-$string['modulenameplural'] = 'Moodle Chat Bots';
-$string['moodlechatbotname'] = 'Moodle Chat Bot';
-$string['moodlechatbotsettings'] = 'Moodle Chat Bot Settings';
-$string['moodlechatbotfieldset'] = 'Chat Bot Settings';
-$string['moodlechatbotname_help'] = 'Moodle Chat Bot Name Help';
+$string['pluginname'] = 'Moodle Chatbot'; // Standardized name
+$string['modulename'] = 'Moodle Chatbot'; // Consistent with pluginname
+$string['pluginadministration'] = 'Moodle Chatbot Administration'; // Consistent naming
+$string['modulenameplural'] = 'Moodle Chatbots'; // Correct pluralization
+$string['moodlechatbotname'] = 'Chatbot Name';  // More concise
+$string['moodlechatbotsettings'] = 'Moodle Chatbot Settings'; // Main settings page title
+$string['moodlechatbotfieldset'] = 'Chatbot Settings';  // Fieldset legend text
+$string['moodlechatbotname_help'] = 'Enter a descriptive name for the chatbot instance.'; // Helpful description
+$string['groqapikey'] = 'Groq API Key'; // For the API key setting
+$string['groqapikeydesc'] = 'Enter your Groq API key here. This key is required for the chatbot to function.'; // Description for the API key setting
+$string['pluginnamesettings'] = 'Moodle Chatbot Settings'; // Add this back as it was being used in settings.php
 
-// New string for the web service
-$string['getcoursesservice'] = 'Get enrolled courses service';
+
+// Strings for web service descriptions:  (Highly recommended)
+$string['getcoursesservice'] = 'Get enrolled courses';
+$string['sendmessageservice'] = 'Send a message to the chatbot.';
+$string['moodlechatbot:addinstance'] = 'Add a new Moodle Chatbot activity';
+$string['moodlechatbot:use'] = 'Use Moodle Chatbot';
+$string['moodlechatbot:view'] = 'View Moodle Chatbot';
