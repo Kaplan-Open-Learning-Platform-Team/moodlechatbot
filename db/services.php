@@ -34,11 +34,18 @@ $functions = [
         'type'        => 'read',
         'ajax'        => true,
     ],
+    'mod_moodlechatbot_send_message' => [
+        'classname'   => 'mod_moodlechatbot\external\send_message',
+        'methodname'  => 'execute',
+        'description' => 'Send a message to the chatbot',
+        'type'        => 'write',
+        'ajax'        => true,
+    ],
 ];
 
 $services = [
     'Moodle Chatbot Service' => [
-        'functions' => ['mod_moodlechatbot_get_enrolled_courses'],
+        'functions' => ['mod_moodlechatbot_get_enrolled_courses', 'mod_moodlechatbot_send_message'],
         'restrictedusers' => 0,
         'enabled' => 1,
     ],
