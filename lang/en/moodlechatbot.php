@@ -44,3 +44,5 @@ $string['sendmessageservice'] = 'Send a message to the chatbot.';
 $string['moodlechatbot:addinstance'] = 'Add a new Moodle Chatbot activity';
 $string['moodlechatbot:use'] = 'Use Moodle Chatbot';
 $string['moodlechatbot:view'] = 'View Moodle Chatbot';
+$string['groq_api_key'] = 'Groq API Key';
+$string['groq_api_key_desc'] = 'Enter your Groq API key here. You can obtain this from your Groq account.';
