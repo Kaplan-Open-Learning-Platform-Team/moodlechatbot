@@ -23,13 +23,20 @@
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+<?php
 defined('MOODLE_INTERNAL') || die();
 
 if ($hassiteconfig) {
     $settings = new admin_settingpage('mod_moodlechatbot_settings', new lang_string('pluginname', 'mod_moodlechatbot'));
 
-    // phpcs:ignore Generic.CodeAnalysis.EmptyStatement.DetectedIf
-    if ($ADMIN->fulltree) {
-        // TODO: Define actual plugin settings page and add it to the tree - {@link https://docs.moodle.org/dev/Admin_settings}.
-    }
+    $settings->add(new admin_setting_configtext(
+        'moodlechatbot/groq_api_key',
+        new lang_string('groqapikey', 'moodlechatbot'),
+        new lang_string('groqapikeydesc', 'moodlechatbot'),
+        '',
+        PARAM_TEXT
+    ));
+
+    $ADMIN->add('modsettings', new admin_setting_heading('moodlechatbot_settings', new lang_string('pluginname', 'moodlechatbot'), new lang_string('pluginnamesettings', 'moodlechatbot')));
+    $ADMIN->add('modsettings', $settings);
 }
