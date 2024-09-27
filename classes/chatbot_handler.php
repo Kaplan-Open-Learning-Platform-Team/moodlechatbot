@@ -25,7 +25,7 @@ class chatbot_handler {
         $curl = curl_init();
 
         $payload = json_encode([
-            'model' => 'Model ID: llama-3.2-90b-text-preview',
+            'model' => 'llama-3.2-90b-text-preview',
             'messages' => [
                 ['role' => 'user', 'content' => $message]
             ]
