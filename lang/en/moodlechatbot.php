@@ -1,3 +1,4 @@
+//lang/en/moodlechatbot.php
 <?php
 // This file is part of Moodle - https://moodle.org/
 //
