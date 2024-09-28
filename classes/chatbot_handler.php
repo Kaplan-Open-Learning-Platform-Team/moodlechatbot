@@ -22,29 +22,52 @@ class chatbot_handler {
     }
 
     public function handleQuery($message) {
+        global $CFG;
+        require_once($CFG->dirroot . '/lib/filelib.php');
+    
+        debugging('Received message: ' . $message, DEBUG_DEVELOPER);
+    
         $initial_response = $this->sendToGroq($message);
+        debugging('Initial Groq response: ' . $initial_response, DEBUG_DEVELOPER);
+    
         $decoded_response = json_decode($initial_response, true);
         
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            debugging('Failed to decode Groq response: ' . json_last_error_msg(), DEBUG_DEVELOPER);
+            return "Error: Unable to process the response from the AI service.";
+        }
+    
         if (isset($decoded_response['choices'][0]['message']['content'])) {
             $content = $decoded_response['choices'][0]['message']['content'];
+            debugging('Extracted content: ' . $content, DEBUG_DEVELOPER);
+    
+            // Try to decode as JSON, but don't require it to be JSON
             $tool_call = json_decode($content, true);
             
-            if (isset($tool_call['tool_call'])) {
+            if (json_last_error() === JSON_ERROR_NONE && isset($tool_call['tool_call'])) {
+                debugging('Detected tool call: ' . print_r($tool_call, true), DEBUG_DEVELOPER);
                 $tool_name = $tool_call['tool_call']['name'];
                 $tool_params = $tool_call['tool_call']['parameters'];
                 
-                $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
-                
-                // Send the tool result back to Groq for final response formatting
-                $final_response = $this->sendToGroq(json_encode([
-                    'user_message' => $message,
-                    'tool_result' => $tool_result
-                ]));
-                
-                return $this->formatResponse($final_response);
+                try {
+                    $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
+                    debugging('Tool execution result: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
+                    
+                    // Send the tool result back to Groq for final response formatting
+                    $final_response = $this->sendToGroq(json_encode([
+                        'user_message' => $message,
+                        'tool_result' => $tool_result
+                    ]));
+                    
+                    return $this->formatResponse($final_response);
+                } catch (Exception $e) {
+                    debugging('Tool execution failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                    return "Error: Unable to complete the requested operation.";
+                }
             }
         }
         
+        // If we didn't detect a tool call or couldn't process it, return the initial response
         return $this->formatResponse($initial_response);
     }
 
