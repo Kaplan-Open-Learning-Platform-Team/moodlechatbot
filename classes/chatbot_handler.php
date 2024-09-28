@@ -8,17 +8,39 @@ defined('MOODLE_INTERNAL') || die();
 class chatbot_handler {
     private $groq_api_key;
     private $groq_api_url = 'https://api.groq.com/openai/v1/chat/completions';
+    private $tool_manager;
 
     public function __construct() {
         $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
+        $this->tool_manager = new tool_manager();
+        $this->register_tools();
+    }
+
+    private function register_tools() {
+        $this->tool_manager->register_tool('get_enrolled_courses', '\mod_moodlechatbot\tools\get_enrolled_courses');
+        // Register other tools here as needed
     }
 
     public function handleQuery($message) {
-        $lowercaseMessage = strtolower($message);
+        $response = $this->sendToGroq($message);
+        $decoded_response = json_decode($response, true);
         
-        $response = $this->sendToGroq($lowercaseMessage);
+        if (isset($decoded_response['tool_call'])) {
+            $tool_name = $decoded_response['tool_call']['name'];
+            $tool_params = $decoded_response['tool_call']['parameters'];
+            
+            $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
+            
+            // Send the tool result back to Groq for final response formatting
+            $final_response = $this->sendToGroq(json_encode([
+                'user_message' => $message,
+                'tool_result' => $tool_result
+            ]));
+            
+            return $this->formatResponse($final_response);
+        }
         
-        return strtoupper($response);
+        return $this->formatResponse($response);
     }
 
     private function sendToGroq($message) {
@@ -27,6 +49,7 @@ class chatbot_handler {
         $payload = json_encode([
             'model' => 'llama-3.2-90b-text-preview',
             'messages' => [
+                ['role' => 'system', 'content' => $this->getSystemPrompt()],
                 ['role' => 'user', 'content' => $message]
             ]
         ]);
@@ -47,15 +70,21 @@ class chatbot_handler {
         ]);
 
         $response = curl_exec($curl);
-        $err = curl_error($curl);
-
         curl_close($curl);
 
-        if ($err) {
-            return "Error: " . $err;
-        } else {
-            $decoded = json_decode($response, true);
-            return $decoded['choices'][0]['message']['content'] ?? "No response from Groq API";
-        }
+        return $response;
+    }
+
+    private function getSystemPrompt() {
+        return "You are a helpful assistant for a Moodle learning management system. " .
+               "You have access to the following tools: " .
+               "1. get_enrolled_courses: Retrieves the courses the current user is enrolled in. " .
+               "If a user's query requires using a tool, respond with a JSON object containing " .
+               "a 'tool_call' key with 'name' and 'parameters' subkeys. Otherwise, respond normally.";
+    }
+
+    private function formatResponse($response) {
+        $decoded = json_decode($response, true);
+        return $decoded['choices'][0]['message']['content'] ?? "No response from Groq API";
     }
 }
