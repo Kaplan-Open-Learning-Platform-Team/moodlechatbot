@@ -58,7 +58,7 @@ class chatbot_handler {
 
     private function sendToGroq($message) {
         $curl = curl_init();
-
+    
         $payload = json_encode([
             'model' => 'llama-3.2-90b-text-preview',
             'messages' => [
@@ -66,7 +66,7 @@ class chatbot_handler {
                 ['role' => 'user', 'content' => $message]
             ]
         ]);
-
+    
         curl_setopt_array($curl, [
             CURLOPT_URL => $this->groq_api_url,
             CURLOPT_RETURNTRANSFER => true,
@@ -81,12 +81,27 @@ class chatbot_handler {
                 'Content-Type: application/json'
             ],
         ]);
-
+    
         $response = curl_exec($curl);
+        
+        // Check for curl error
+        if ($response === false) {
+            $error = curl_error($curl);
+            curl_close($curl);
+            throw new Exception('CURL Error: ' . $error);
+        }
+    
+        // Ensure the response is valid JSON
+        $json_response = json_decode($response, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new Exception('Invalid JSON response from Groq API: ' . json_last_error_msg());
+        }
+    
         curl_close($curl);
-
+    
         return $response;
     }
+
 
     private function getSystemPrompt() {
         return "You are a helpful assistant for a Moodle learning management system. " .
