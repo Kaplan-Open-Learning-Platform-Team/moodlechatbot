@@ -22,25 +22,30 @@ class chatbot_handler {
     }
 
     public function handleQuery($message) {
-        $response = $this->sendToGroq($message);
-        $decoded_response = json_decode($response, true);
+        $initial_response = $this->sendToGroq($message);
+        $decoded_response = json_decode($initial_response, true);
         
-        if (isset($decoded_response['tool_call'])) {
-            $tool_name = $decoded_response['tool_call']['name'];
-            $tool_params = $decoded_response['tool_call']['parameters'];
+        if (isset($decoded_response['choices'][0]['message']['content'])) {
+            $content = $decoded_response['choices'][0]['message']['content'];
+            $tool_call = json_decode($content, true);
             
-            $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
-            
-            // Send the tool result back to Groq for final response formatting
-            $final_response = $this->sendToGroq(json_encode([
-                'user_message' => $message,
-                'tool_result' => $tool_result
-            ]));
-            
-            return $this->formatResponse($final_response);
+            if (isset($tool_call['tool_call'])) {
+                $tool_name = $tool_call['tool_call']['name'];
+                $tool_params = $tool_call['tool_call']['parameters'];
+                
+                $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
+                
+                // Send the tool result back to Groq for final response formatting
+                $final_response = $this->sendToGroq(json_encode([
+                    'user_message' => $message,
+                    'tool_result' => $tool_result
+                ]));
+                
+                return $this->formatResponse($final_response);
+            }
         }
         
-        return $this->formatResponse($response);
+        return $this->formatResponse($initial_response);
     }
 
     private function sendToGroq($message) {
@@ -80,7 +85,8 @@ class chatbot_handler {
                "You have access to the following tools: " .
                "1. get_enrolled_courses: Retrieves the courses the current user is enrolled in. " .
                "If a user's query requires using a tool, respond with a JSON object containing " .
-               "a 'tool_call' key with 'name' and 'parameters' subkeys. Otherwise, respond normally.";
+               "a 'tool_call' key with 'name' and 'parameters' subkeys. Otherwise, respond normally. " .
+               "After receiving tool results, provide a natural language response to the user.";
     }
 
     private function formatResponse($response) {
