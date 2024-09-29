@@ -25,7 +25,6 @@ class chatbot_handler {
             $initial_response = $this->sendToGroq($message);
             $decoded_response = json_decode($initial_response, true);
             
-            debugging('Initial Groq response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
     
             if (isset($decoded_response['choices'][0]['message']['tool_calls'])) {
                 // ... (rest of the tool call handling code)
