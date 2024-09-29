@@ -1,4 +1,3 @@
-
 // interface.js
 define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     const init = () => {
@@ -16,11 +15,9 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
         const sendMessage = () => {
             const userInput = textarea.value.trim();
-
             if (!userInput) {
                 return;
             }
-
             appendMessage("user", userInput);
             textarea.value = "";
 
@@ -28,14 +25,22 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 methodname: 'mod_moodlechatbot_send_message',
                 args: { message: userInput },
                 done: function(response) {
-                    appendMessage("assistant", response.response);
+                    if (response.error) {
+                        console.error('Error:', response.error);
+                        appendMessage("assistant", "An error occurred: " + response.error);
+                    } else {
+                        appendMessage("assistant", response.response);
+                    }
                 },
-                fail: Notification.exception
+                fail: function(reason) {
+                    console.error('AJAX error:', reason);
+                    appendMessage("assistant", "An error occurred while processing your request.");
+                    Notification.exception(reason);
+                }
             }]);
         };
 
         sendButton.addEventListener("click", sendMessage);
-
         textarea.addEventListener("keypress", (event) => {
             if (event.key === "Enter" && !event.shiftKey) {
                 event.preventDefault();
@@ -48,5 +53,3 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         init: init
     };
 });
-
-
