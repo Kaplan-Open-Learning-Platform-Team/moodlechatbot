@@ -1,3 +1,4 @@
+<?php 
 // classes/tools/get_enrolled_courses.php
 
 namespace mod_moodlechatbot\tools;
