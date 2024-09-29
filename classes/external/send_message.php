@@ -51,16 +51,16 @@ class send_message extends external_api {
     
         $params = self::validate_parameters(self::execute_parameters(), ['message' => $message]);
     
-        $handler = new \mod_moodlechatbot\chatbot_handler();
-        $response = $handler->handleQuery($params['message']);
+        try {
+            $handler = new \mod_moodlechatbot\chatbot_handler();
+            $response = $handler->handleQuery($params['message']);
     
-        // Decode the JSON response from handleQuery
-        $decoded_response = json_decode($response, true);
-    
-        // Return the response or an error message
-        return [
-            'response' => $decoded_response['response'] ?? $decoded_response['error'] ?? 'Unknown error occurred'
-        ];
+            return [
+                'response' => $response
+            ];
+        } catch (Exception $e) {
+            throw new moodle_exception('error_executing_chatbot', 'mod_moodlechatbot', '', $e->getMessage());
+        }
     }
 
     /**
