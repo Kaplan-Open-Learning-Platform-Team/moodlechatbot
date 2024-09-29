@@ -1,6 +1,6 @@
 <?php
 // classes/chatbot_handler.php
-
+header('Content-Type: application/json');
 namespace mod_moodlechatbot;
 
 defined('MOODLE_INTERNAL') || die();
@@ -21,35 +21,28 @@ class chatbot_handler {
     }
 
     public function handleQuery($message) {
-        $initial_response = $this->sendToGroq($message);
-        $decoded_response = json_decode($initial_response, true);
-        
-        debugging('Initial Groq response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
-
-        if (isset($decoded_response['choices'][0]['message']['tool_calls'])) {
-            $tool_calls = $decoded_response['choices'][0]['message']['tool_calls'];
-            $tool_results = [];
-
-            foreach ($tool_calls as $tool_call) {
-                $tool_name = $tool_call['function']['name'];
-                $tool_params = json_decode($tool_call['function']['arguments'], true);
-                
-                debugging('Executing tool: ' . $tool_name . ' with params: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
-                
-                try {
-                    $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
-                    $tool_results[] = [
-                        'tool_call_id' => $tool_call['id'],
-                        'output' => json_encode($tool_result)
-                    ];
-                } catch (Exception $e) {
-                    debugging('Tool execution failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
-                    $tool_results[] = [
-                        'tool_call_id' => $tool_call['id'],
-                        'output' => json_encode(['error' => $e->getMessage()])
-                    ];
-                }
+        try {
+            $initial_response = $this->sendToGroq($message);
+            $decoded_response = json_decode($initial_response, true);
+            
+            debugging('Initial Groq response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
+    
+            if (isset($decoded_response['choices'][0]['message']['tool_calls'])) {
+                // ... (rest of the tool call handling code)
+    
+                $final_response = $this->sendToGroq($message, $tool_results);
+                debugging('Final Groq response: ' . $final_response, DEBUG_DEVELOPER);
+                $formatted_response = $this->formatResponse($final_response);
+            } else {
+                $formatted_response = $this->formatResponse($initial_response);
             }
+    
+            return json_encode(['response' => $formatted_response]);
+        } catch (Exception $e) {
+            debugging('Error in handleQuery: ' . $e->getMessage(), DEBUG_DEVELOPER);
+            return json_encode(['error' => $e->getMessage()]);
+        }
+    }
 
             // Send the tool results back to Groq for final response formatting
             $final_response = $this->sendToGroq($message, $tool_results);
