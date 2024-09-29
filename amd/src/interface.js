@@ -26,14 +26,14 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
                 args: { message: userInput },
                 done: function(response) {
                     if (response.error) {
-                        console.error('Error:', response.error); // Correction
+                        //console.error('Error:', response.error); // Correction
                         appendMessage("assistant", "An error occurred: " + response.error);
                     } else {
                         appendMessage("assistant", response.response);
                     }
                 },
                 fail: function(reason) {
-                    console.error('AJAX error:', reason);  // Correction
+                    //console.error('AJAX error:', reason);  // Correction
                     appendMessage("assistant", "An error occurred while processing your request.");
                     Notification.exception(reason);
                 }
