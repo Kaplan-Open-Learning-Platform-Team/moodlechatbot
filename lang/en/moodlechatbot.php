@@ -51,3 +51,4 @@ $string['moodlechatbot:view'] = 'View Moodle Chatbot';
 $string['groq_api_key'] = 'Groq API Key';
 $string['groq_api_key_desc'] = 'Enter your Groq API key here. You can obtain this from your Groq account.';
 $string['error_executing_chatbot'] = 'An error occurred while processing your request: {$a}';
+$string['groq_api_error'] = 'Error communicating with Groq API: {$a}';
