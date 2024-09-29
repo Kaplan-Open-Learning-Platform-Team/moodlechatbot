@@ -13,18 +13,10 @@ class tool_manager {
     }
 
     public function get_tool($name) {
-        debugging('Attempting to get tool: ' . $name, DEBUG_DEVELOPER);
-        if (!isset($this->tools[$name])) {
-            debugging('Tool not found: ' . $name, DEBUG_DEVELOPER);
-            throw new \moodle_exception('tooltnotfound', 'mod_moodlechatbot', '', $name);
+        if (isset($this->tools[$name])) {
+            return new $this->tools[$name]();
         }
-        $class = $this->tools[$name];
-        debugging('Class name: ' . $class, DEBUG_DEVELOPER);
-        if (!class_exists($class)) {
-            debugging('Class not found: ' . $class, DEBUG_DEVELOPER);
-            throw new \moodle_exception('classnotfound', 'mod_moodlechatbot', '', $class);
-        }
-        return new $class();
+        return null;
     }
 
     public function execute_tool($name, $params = []) {
