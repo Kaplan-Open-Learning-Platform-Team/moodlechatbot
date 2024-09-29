@@ -17,7 +17,7 @@ class chatbot_handler {
     }
 
     private function register_tools() {
-        $this->tool_manager->register_tool('get_enrolled_courses', '\mod_moodlechatbot\tools\get_enrolled_courses');
+        $this->tool_manager->register_tool('get_enrolled_courses', 'mod_moodlechatbot\tools\get_enrolled_courses');
     }
 
     public function handleQuery($message) {
