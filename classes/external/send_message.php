@@ -48,14 +48,18 @@ class send_message extends external_api {
     public static function execute($message) {
         global $CFG;
         require_once($CFG->dirroot . '/mod/moodlechatbot/classes/chatbot_handler.php');
-
+    
         $params = self::validate_parameters(self::execute_parameters(), ['message' => $message]);
-
+    
         $handler = new \mod_moodlechatbot\chatbot_handler();
         $response = $handler->handleQuery($params['message']);
-
+    
+        // Decode the JSON response from handleQuery
+        $decoded_response = json_decode($response, true);
+    
+        // Return the response or an error message
         return [
-            'response' => $response
+            'response' => $decoded_response['response'] ?? $decoded_response['error'] ?? 'Unknown error occurred'
         ];
     }
 
