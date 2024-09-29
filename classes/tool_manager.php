@@ -9,7 +9,7 @@ class tool_manager {
     private $tools = [];
 
     public function register_tool($name, $class) {
-        $this->tools[$name] = '\\' . ltrim($class, '\\');
+        $this->tools[$name] = $class;
     }
 
     public function get_tool($name) {
