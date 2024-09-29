@@ -1,5 +1,6 @@
 <?php
 // classes/chatbot_handler.php
+
 namespace mod_moodlechatbot;
 
 defined('MOODLE_INTERNAL') || die();
@@ -16,90 +17,47 @@ class chatbot_handler {
     }
 
     private function register_tools() {
-        $this->tool_manager->register_tool('get_enrolled_courses', 'mod_moodlechatbot\tools\get_enrolled_courses');
+        $this->tool_manager->register_tool('get_enrolled_courses', '\mod_moodlechatbot\tools\get_enrolled_courses');
+        // Register other tools here as needed
     }
 
     public function handleQuery($message) {
-        try {
-            $initial_response = $this->sendToGroq($message);
-            $decoded_response = json_decode($initial_response, true);
+        $initial_response = $this->sendToGroq($message);
+        $decoded_response = json_decode($initial_response, true);
+        
+        if (isset($decoded_response['choices'][0]['message']['content'])) {
+            $content = $decoded_response['choices'][0]['message']['content'];
+            $tool_call = json_decode($content, true);
             
-            debugging('Initial Groq response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
-
-            if (isset($decoded_response['choices'][0]['message']['tool_calls'])) {
-                $tool_calls = $decoded_response['choices'][0]['message']['tool_calls'];
-                $tool_results = [];
-
-                foreach ($tool_calls as $tool_call) {
-                    $tool_name = $tool_call['function']['name'];
-                    $tool_params = json_decode($tool_call['function']['arguments'], true);
-                    
-                    debugging('Executing tool: ' . $tool_name . ' with params: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
-                    
-                    try {
-                        $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
-                        $tool_results[] = [
-                            'tool_call_id' => $tool_call['id'],
-                            'output' => json_encode($tool_result)
-                        ];
-                    } catch (Exception $e) {
-                        debugging('Tool execution failed: ' . $e->getMessage(), DEBUG_DEVELOPER);
-                        $tool_results[] = [
-                            'tool_call_id' => $tool_call['id'],
-                            'output' => json_encode(['error' => $e->getMessage()])
-                        ];
-                    }
-                }
-
-                // Send the tool results back to Groq for final response formatting
-                $final_response = $this->sendToGroq($message, $tool_results);
-                debugging('Final Groq response: ' . $final_response, DEBUG_DEVELOPER);
-                $formatted_response = $this->formatResponse($final_response);
-            } else {
-                $formatted_response = $this->formatResponse($initial_response);
+            if (isset($tool_call['tool_call'])) {
+                $tool_name = $tool_call['tool_call']['name'];
+                $tool_params = $tool_call['tool_call']['parameters'];
+                
+                $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
+                
+                // Send the tool result back to Groq for final response formatting
+                $final_response = $this->sendToGroq(json_encode([
+                    'user_message' => $message,
+                    'tool_result' => $tool_result
+                ]));
+                
+                return $this->formatResponse($final_response);
             }
-
-            return ['response' => $formatted_response];
-        } catch (Exception $e) {
-            debugging('Error in handleQuery: ' . $e->getMessage(), DEBUG_DEVELOPER);
-            return ['error' => $e->getMessage()];
         }
+        
+        return $this->formatResponse($initial_response);
     }
 
-    private function sendToGroq($message, $tool_results = null) {
+    private function sendToGroq($message) {
         $curl = curl_init();
 
-        $payload = [
-            'model' => 'llama3-groq-70b-8192-tool-use-preview',
+        $payload = json_encode([
+            'model' => 'llama-3.2-90b-text-preview',
             'messages' => [
                 ['role' => 'system', 'content' => $this->getSystemPrompt()],
                 ['role' => 'user', 'content' => $message]
-            ],
-            'tools' => [
-                [
-                    'type' => 'function',
-                    'function' => [
-                        'name' => 'get_enrolled_courses',
-                        'description' => 'Get the courses the current user is enrolled in',
-                        'parameters' => [
-                            'type' => 'object',
-                            'properties' => [],
-                            'required' => []
-                        ]
-                    ]
-                ]
-            ],
-            'tool_choice' => 'auto',
-            'max_tokens' => 4096
-        ];
-
-        if ($tool_results !== null) {
-            $payload['messages'][] = [
-                'role' => 'assistant',
-                'content' => null,
-                'tool_calls' => $tool_results
-            ];
-        }
+            ]
+        ]);
 
         curl_setopt_array($curl, [
             CURLOPT_URL => $this->groq_api_url,
@@ -109,7 +67,7 @@ class chatbot_handler {
             CURLOPT_TIMEOUT => 30,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => json_encode($payload),
+            CURLOPT_POSTFIELDS => $payload,
             CURLOPT_HTTPHEADER => [
                 'Authorization: Bearer ' . $this->groq_api_key,
                 'Content-Type: application/json'
@@ -117,21 +75,17 @@ class chatbot_handler {
         ]);
 
         $response = curl_exec($curl);
-        $error = curl_error($curl);
         curl_close($curl);
-
-        if ($error) {
-            debugging('Groq API error: ' . $error, DEBUG_DEVELOPER);
-            throw new \moodle_exception('groq_api_error', 'mod_moodlechatbot', '', $error);
-        }
 
         return $response;
     }
 
     private function getSystemPrompt() {
         return "You are a helpful assistant for a Moodle learning management system. " .
-               "You have access to the get_enrolled_courses tool to retrieve the courses " .
-               "the current user is enrolled in. Use this tool when asked about courses. " .
+               "You have access to the following tools: " .
+               "1. get_enrolled_courses: Retrieves the courses the current user is enrolled in. " .
+               "If a user's query requires using a tool, respond with a JSON object containing " .
+               "a 'tool_call' key with 'name' and 'parameters' subkeys. Otherwise, respond normally. " .
                "After receiving tool results, provide a natural language response to the user.";
     }
 
