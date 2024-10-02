@@ -22,10 +22,14 @@ class chatbot_handler {
     }
 
     public function handleQuery($message) {
-        $initial_response = $this->sendToGroq($message);
-        $decoded_response = json_decode($initial_response, true);
-        
-        if (isset($decoded_response['choices'][0]['message']['content'])) {
+        try {
+            $initial_response = $this->sendToGroq($message);
+            $decoded_response = json_decode($initial_response, true);
+            
+            if (!isset($decoded_response['choices'][0]['message']['content'])) {
+                throw new \Exception("Unexpected response format from Groq API");
+            }
+
             $content = $decoded_response['choices'][0]['message']['content'];
             $tool_call = json_decode($content, true);
             
@@ -42,10 +46,13 @@ class chatbot_handler {
                 ]));
                 
                 return $this->formatResponse($final_response);
+            } else {
+                // If no tool call is needed, return the initial response
+                return $this->formatResponse($initial_response);
             }
+        } catch (\Exception $e) {
+            return "An error occurred: " . $e->getMessage();
         }
-        
-        return $this->formatResponse($initial_response);
     }
 
     private function sendToGroq($message) {
@@ -75,6 +82,9 @@ class chatbot_handler {
         ]);
 
         $response = curl_exec($curl);
+        if ($response === false) {
+            throw new \Exception(curl_error($curl));
+        }
         curl_close($curl);
 
         return $response;
@@ -91,6 +101,9 @@ class chatbot_handler {
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
-        return $decoded['choices'][0]['message']['content'] ?? "No response from Groq API";
+        if (!isset($decoded['choices'][0]['message']['content'])) {
+            throw new \Exception("Unexpected response format from Groq API");
+        }
+        return $decoded['choices'][0]['message']['content'];
     }
 }
