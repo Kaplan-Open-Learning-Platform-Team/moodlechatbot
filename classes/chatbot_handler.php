@@ -3,7 +3,8 @@
  namespace mod_moodlechatbot;
 
  defined('MOODLE_INTERNAL') || die();
- 
+
+ require_once(__DIR__ . '/../classes/helper_functions.php');
  require_once(__DIR__ . '/tool.php');
  require_once(__DIR__ . '/tools/get_enrolled_courses.php');
  
@@ -78,9 +79,12 @@
             $response['success'] = false;  // Ensure success is false on error
         }
 
-        $response['debug'] = $this->debug_log; // Add the accumulated debug logs AFTER try/catch
-        $final_json = json_encode($response, JSON_PRETTY_PRINT);
-        return $final_json; // Return the complete JSON response at the very end
+        $response['debug'] = $this->debug_log; // Include debug log in the JSON response.
+        $final_json =  json_encode($response, JSON_PRETTY_PRINT);
+
+        output_debug_log(); // Output the debug log to the console.
+        
+        return $final_json; // Return the JSON response *after* logging.
         }
  
  
