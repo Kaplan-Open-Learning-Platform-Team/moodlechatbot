@@ -33,20 +33,23 @@ require_once(__DIR__ . '/../tool.php');
 
 class get_enrolled_courses extends \mod_moodlechatbot\tool {
     public function execute($params = []) {
-        global $USER, $DB;
+        global $USER, $CFG; // Include $USER here
 
-        debug_to_console("Entering get_enrolled_courses tool");  // Log entry point
+        $path = $CFG->dirroot . '/mod/moodlechatbot/classes/helper_functions.php';
 
-        debug_to_console(['Received parameters:' => $params]); // Log input parameters
+        if (file_exists($path)) {
+            require_once($path);
+        } else {
+             debug_to_console(['Error: helper file not found:' => $path]);
+        }
 
         if (empty($params['userid'])) {
             $userid = $USER->id;
-            debug_to_console("Using current user ID: " . $userid); // Log user ID source
+            debug_to_console("Using current user ID: " . $userid);
         } else {
             $userid = $params['userid'];
-            debug_to_console("Using provided user ID: " . $userid); // Log user ID source
+            debug_to_console("Using provided user ID: " . $userid); 
         }
-
 
         $courses = enrol_get_users_courses($userid, true, 'id, shortname, fullname');
 
@@ -85,3 +88,4 @@ function debug_to_console($data) {
     }
     echo "<script>console.log('Debug Objects: " . $output . "' );</script>";
 }
+?>

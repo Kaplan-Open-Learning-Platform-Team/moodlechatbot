@@ -16,3 +16,4 @@ abstract class tool {
 
     abstract public function execute($params = []);
 }
+?>

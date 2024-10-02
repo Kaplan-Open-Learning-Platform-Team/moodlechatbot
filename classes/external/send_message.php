@@ -73,3 +73,4 @@ class send_message extends external_api {
         ]);
     }
 }
+?>

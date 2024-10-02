@@ -70,19 +70,18 @@
              }
  
  
-             $response['success'] = true;
-         } catch (\Exception $e) {
-             $this->log_debug(['Error in handleQuery:' => $e->getMessage()]);
-             $response['message'] = "An error occurred: " . $e->getMessage();
-             $response['success'] = false; 
-         }
- 
- 
-         $response['debug'] = $this->debug_log;
-         $final_json =  json_encode($response, JSON_PRETTY_PRINT);
-         $this->log_debug(['Final JSON response:' => $final_json]);
-         return $final_json;
-     }
+             $response['success'] = true; // Set success to true if no errors occurred
+
+        } catch (\Exception $e) {
+            $this->log_debug(['Error in handleQuery:' => $e->getMessage()]);
+            $response['message'] = "An error occurred: " . $e->getMessage();
+            $response['success'] = false;  // Ensure success is false on error
+        }
+
+        $response['debug'] = $this->debug_log; // Add the accumulated debug logs AFTER try/catch
+        $final_json = json_encode($response, JSON_PRETTY_PRINT);
+        return $final_json; // Return the complete JSON response at the very end
+        }
  
  
  
@@ -141,14 +140,14 @@
      }
  
      private function log_debug($message) {
-         if (is_array($message) || is_object($message)){
-             $message = json_encode($message);
-         }
-         $this->debug_log[] = $message;
-         echo "<script>console.log('[MOD_MOODLECHATBOT] " . addslashes($message) . "');</script>";
-     }
+        if (is_array($message) || is_object($message)){
+            $message = json_encode($message);
+        }
+        $this->debug_log[] = $message; // Store debug messages in array.
+    }
  
      private function cleanJsonResponse($response) {
          return $response; 
      }
  }
+ ?>
