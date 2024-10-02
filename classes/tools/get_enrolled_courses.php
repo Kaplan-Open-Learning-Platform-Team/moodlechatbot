@@ -18,7 +18,7 @@
  * Get enrolled courses tool for the Moodle Chatbot plugin.
  *
  * @package    mod_moodlechatbot
- * @copyright  2024 Your Name &lt;your@email.com&gt;
+ * @copyright  2024 Your Name <your@email.com>
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -28,22 +28,35 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/../tool.php');
 
+// Include the helper function (assuming it's in a separate file or defined globally).
+// If it's in a separate file, use: require_once('path/to/helper_functions.php');
+
 class get_enrolled_courses extends \mod_moodlechatbot\tool {
     public function execute($params = []) {
         global $USER, $DB;
 
-        // Log the execution of this tool
-        debugging('Executing get_enrolled_courses tool', DEBUG_DEVELOPER);
+        debug_to_console("Entering get_enrolled_courses tool");  // Log entry point
+
+        debug_to_console(['Received parameters:' => $params]); // Log input parameters
 
         if (empty($params['userid'])) {
             $userid = $USER->id;
+            debug_to_console("Using current user ID: " . $userid); // Log user ID source
         } else {
             $userid = $params['userid'];
+            debug_to_console("Using provided user ID: " . $userid); // Log user ID source
         }
 
-        debugging('Fetching courses for user ID: ' . $userid, DEBUG_DEVELOPER);
 
         $courses = enrol_get_users_courses($userid, true, 'id, shortname, fullname');
+
+        if ($courses === false) {  // Check for errors from enrol_get_users_courses
+            debug_to_console("Error retrieving courses for user ID: " . $userid);
+            return []; // Or handle the error differently
+        }
+
+        debug_to_console("Retrieved courses: " . count($courses)); // Log the number of courses fetched
+
         $result = [];
 
         foreach ($courses as $course) {
@@ -54,8 +67,21 @@ class get_enrolled_courses extends \mod_moodlechatbot\tool {
             ];
         }
 
-        debugging('Found ' . count($result) . ' courses', DEBUG_DEVELOPER);
+        debug_to_console(['Processed courses:' => $result]); // Log the formatted course data
+
+
+        debug_to_console("Exiting get_enrolled_courses tool"); // Log exit point
 
         return $result;
     }
+}
+
+
+
+function debug_to_console($data) {
+    $output = $data;
+    if (is_array($output) || is_object($output)) { // Handle arrays and objects
+        $output = json_encode($output);
+    }
+    echo "<script>console.log('Debug Objects: " . $output . "' );</script>";
 }
