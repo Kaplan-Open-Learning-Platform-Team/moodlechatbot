@@ -19,11 +19,24 @@ class tool_manager {
         return null;
     }
 
+    private function debug_to_console($data) {
+        $output = $data;
+        if (is_array($output))
+            $output = implode(', ', $output);
+
+        echo "<script>console.log('Debug Objects: ' . json_encode($output) . ');</script>";
+    }
+
     public function execute_tool($name, $params = []) {
+        $this->debug_to_console(['tool_call_request' => ['name' => $name, 'parameters' => $params]]);
+
         $tool = $this->get_tool($name);
         if ($tool) {
-            return $tool->execute($params);
+            $result = $tool->execute($params);
+            $this->debug_to_console(['tool_call_response' => $result]);
+            return $result;
         }
         return null;
     }
 }
+
