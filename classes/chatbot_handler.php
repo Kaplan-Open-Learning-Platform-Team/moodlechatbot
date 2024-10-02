@@ -26,6 +26,8 @@ namespace mod_moodlechatbot;
 
 defined('MOODLE_INTERNAL') || die();
 
+require_once(__DIR__ . '/tool.php');
+
 class chatbot_handler {
     private $groq_api_key;
     private $groq_api_url = 'https://api.groq.com/openai/v1/chat/completions';
