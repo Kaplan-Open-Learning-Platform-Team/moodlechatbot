@@ -97,7 +97,7 @@ class chatbot_handler {
         }
 
         $response['debug'] = $this->debug_log;
-        return json_encode($response);
+        return $this->cleanJsonResponse(json_encode($response));
     }
 
     private function sendToGroq($message) {
@@ -154,5 +154,15 @@ class chatbot_handler {
 
     private function log_debug($message) {
         $this->debug_log[] = $message;
+    }
+
+    private function cleanJsonResponse($response) {
+        // Remove any content before the first '{' and after the last '}'
+        $start = strpos($response, '{');
+        $end = strrpos($response, '}');
+        if ($start !== false && $end !== false) {
+            $response = substr($response, $start, $end - $start + 1);
+        }
+        return $response;
     }
 }
