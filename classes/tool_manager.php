@@ -1,7 +1,6 @@
 <?php
 // classes/tool_manager.php
 
-
 namespace mod_moodlechatbot;
 
 defined('MOODLE_INTERNAL') || die();
@@ -10,28 +9,28 @@ class tool_manager {
     private $tools = [];
 
     public function register_tool($name, $class) {
-        $this->tools[$name] = $class;
+        $this->tools[$name] = '\\' . ltrim($class, '\\');
     }
 
     public function get_tool($name) {
-        if (isset($this->tools[$name])) {
-            return new $this->tools[$name]();
+        debugging('Attempting to get tool: ' . $name, DEBUG_DEVELOPER);
+        if (!isset($this->tools[$name])) {
+            debugging('Tool not found: ' . $name, DEBUG_DEVELOPER);
+            throw new \moodle_exception('tooltnotfound', 'mod_moodlechatbot', '', $name);
         }
-        return null;
-    }
-
-    private function debug_to_console($data) {
-        echo "<script>console.log('". json_encode($data) . "');</script>";
+        $class = $this->tools[$name];
+        debugging('Class name: ' . $class, DEBUG_DEVELOPER);
+        if (!class_exists($class)) {
+            debugging('Class not found: ' . $class, DEBUG_DEVELOPER);
+            throw new \moodle_exception('classnotfound', 'mod_moodlechatbot', '', $class);
+        }
+        return new $class();
     }
 
     public function execute_tool($name, $params = []) {
-        $this->debug_to_console(['tool_call_request' => ['name' => $name, 'parameters' => $params]]);
-
         $tool = $this->get_tool($name);
         if ($tool) {
-            $result = $tool->execute($params);
-            $this->debug_to_console(['tool_call_response' => $result]);
-            return $result;
+            return $tool->execute($params);
         }
         return null;
     }
