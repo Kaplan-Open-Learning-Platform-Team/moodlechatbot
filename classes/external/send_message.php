@@ -9,6 +9,8 @@ require_once(__DIR__ . '/../helper_functions.php');
 use external_api;
 use external_function_parameters;
 use external_value;
+use external_single_structure;
+use external_multiple_structure;
 use mod_moodlechatbot\chatbot_handler;
 
 class send_message extends external_api {
@@ -21,18 +23,14 @@ class send_message extends external_api {
     public static function execute($message) {
         $params = self::validate_parameters(self::execute_parameters(), ['message' => $message]);
         
-        debug_to_console("Received message: " . $params['message']);
-        
         $handler = new chatbot_handler();
         $response = $handler->handleQuery($params['message']);
-        
-        debug_to_console("Sending response: " . json_encode($response));
         
         return $response;
     }
 
     public static function execute_returns() {
-        return new \external_single_structure([
+        return new external_single_structure([
             'success' => new external_value(PARAM_BOOL, 'Whether the request was successful'),
             'message' => new external_value(PARAM_TEXT, 'The response message'),
             'courses' => new external_multiple_structure(

@@ -93,19 +93,32 @@ class chatbot_handler {
 
     private function formatResponse($result) {
         $response = [
-            'success' => $result['success'] ?? false,
-            'message' => $result['message'] ?? 'No message provided',
-            'debug' => output_debug_log()
+            'success' => isset($result['success']) ? (bool)$result['success'] : false,
+            'message' => isset($result['message']) ? (string)$result['message'] : 'No message provided'
         ];
-
-        if (isset($result['courses'])) {
-            $response['courses'] = $result['courses'];
+    
+        // Optionally add courses if they exist
+        if (!empty($result['courses'])) {
+            $response['courses'] = array_map(function($course) {
+                return [
+                    'id' => (int)$course['id'],
+                    'shortname' => (string)$course['shortname'],
+                    'fullname' => (string)$course['fullname']
+                ];
+            }, $result['courses']);
         }
-
-        if (isset($result['error'])) {
-            $response['error'] = $result['error'];
+    
+        // Add debug information
+        $debug_log = \mod_moodlechatbot\get_debug_log();
+        if (!empty($debug_log)) {
+            $response['debug'] = array_map('strval', $debug_log);
         }
-
+    
+        // Add error if it exists
+        if (!empty($result['error'])) {
+            $response['error'] = (string)$result['error'];
+        }
+    
         return $response;
     }
 
