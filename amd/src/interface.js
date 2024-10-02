@@ -1,4 +1,3 @@
-// interface.js
 define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     const init = () => {
         const sendButton = document.getElementById("moodlechatbot-send");
@@ -14,23 +13,55 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         };
 
         const logDebug = (debugInfo) => {
-            console.log("Chatbot Debug Information:");
-            debugInfo.forEach(item => console.log(item));
+            console.group("Chatbot Debug Information");
+            debugInfo.forEach(item => {
+                try {
+                    // Try to parse the debug item as JSON first
+                    const parsed = JSON.parse(item);
+                    console.log(parsed);
+                } catch (e) {
+                    // If it's not JSON, log it as a regular string
+                    console.log(item);
+                }
+            });
+            console.groupEnd();
         };
 
         const handleResponse = (response) => {
+            console.log("Raw response:", response);  // Log the raw response for debugging
+
+            let parsedResponse;
+            
             try {
-                const parsedResponse = JSON.parse(response);
-                if (parsedResponse.success) {
-                    appendMessage("assistant", parsedResponse.message);
+                // Handle if response is already an object
+                if (typeof response === 'object') {
+                    parsedResponse = response;
                 } else {
-                    appendMessage("error", "Error: " + parsedResponse.message);
+                    parsedResponse = JSON.parse(response);
                 }
-                if (parsedResponse.debug && parsedResponse.debug.length > 0) {
+
+                // Log the parsed response for debugging
+                console.log("Parsed response:", parsedResponse);
+
+                // Handle the regular response
+                if (parsedResponse.courses) {
+                    // Handle courses if present
+                    console.log("Courses found:", parsedResponse.courses);
+                    appendMessage("assistant", "Found " + parsedResponse.courses.length + " courses");
+                }
+
+                if (parsedResponse.message) {
+                    appendMessage("assistant", parsedResponse.message);
+                }
+
+                // Handle debug information
+                if (parsedResponse.debug && Array.isArray(parsedResponse.debug)) {
                     logDebug(parsedResponse.debug);
                 }
+
             } catch (error) {
-                console.error("Failed to parse response:", error);
+                console.error("Failed to process response:", error);
+                console.error("Problematic response:", response);
                 appendMessage("error", "An error occurred while processing the response.");
             }
         };
@@ -48,7 +79,14 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
             Ajax.call([{
                 methodname: 'mod_moodlechatbot_send_message',
                 args: { message: userInput },
-                done: handleResponse,
+                done: function(response) {
+                    try {
+                        handleResponse(response);
+                    } catch (error) {
+                        console.error("Error in response handler:", error);
+                        appendMessage("error", "An error occurred while processing the response.");
+                    }
+                },
                 fail: function(error) {
                     console.error("AJAX call failed:", error);
                     appendMessage("error", "Failed to send message. Please try again.");
