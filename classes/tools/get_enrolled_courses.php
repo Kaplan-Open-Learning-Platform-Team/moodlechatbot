@@ -32,11 +32,16 @@ class get_enrolled_courses extends \mod_moodlechatbot\tool {
     public function execute($params = []) {
         global $USER, $DB;
 
+        // Log the execution of this tool
+        debugging('Executing get_enrolled_courses tool', DEBUG_DEVELOPER);
+
         if (empty($params['userid'])) {
             $userid = $USER->id;
         } else {
             $userid = $params['userid'];
         }
+
+        debugging('Fetching courses for user ID: ' . $userid, DEBUG_DEVELOPER);
 
         $courses = enrol_get_users_courses($userid, true, 'id, shortname, fullname');
         $result = [];
@@ -48,6 +53,8 @@ class get_enrolled_courses extends \mod_moodlechatbot\tool {
                 'fullname' => $course->fullname
             ];
         }
+
+        debugging('Found ' . count($result) . ' courses', DEBUG_DEVELOPER);
 
         return $result;
     }

@@ -27,6 +27,7 @@ namespace mod_moodlechatbot;
 defined('MOODLE_INTERNAL') || die();
 
 require_once(__DIR__ . '/tool.php');
+require_once(__DIR__ . '/tools/get_enrolled_courses.php');
 
 class chatbot_handler {
     private $groq_api_key;
