@@ -20,11 +20,7 @@ class tool_manager {
     }
 
     private function debug_to_console($data) {
-        $output = $data;
-        if (is_array($output))
-            $output = implode(', ', $output);
-
-        echo "<script>console.log('Debug Objects: ' . json_encode($output) . ');</script>";
+        echo "<script>console.log('". json_encode($data) . "');</script>";
     }
 
     public function execute_tool($name, $params = []) {
@@ -39,4 +35,3 @@ class tool_manager {
         return null;
     }
 }
-
