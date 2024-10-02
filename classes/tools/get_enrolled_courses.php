@@ -1,10 +1,10 @@
 <?php
 
-namespace mod_moodlechatbot\	ools;
+namespace mod_moodlechatbot\tools;
 
 defined('MOODLE_INTERNAL') || die();
 
-class get_enrolled_courses extends \\mod_moodlechatbot\	ool {
+class get_enrolled_courses extends \mod_moodlechatbot\tool {
     public function execute($params = []) {
         global $DB;
 
@@ -27,5 +27,3 @@ class get_enrolled_courses extends \\mod_moodlechatbot\	ool {
         return $result;
     }
 }
-
-
