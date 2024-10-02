@@ -23,7 +23,11 @@ class chatbot_handler {
 
     public function handleQuery($message) {
         try {
+            error_log("Handling query: " . $message);
+            
             $initial_response = $this->sendToGroq($message);
+            error_log("Initial Groq response: " . $initial_response);
+            
             $decoded_response = json_decode($initial_response, true);
             
             if (!isset($decoded_response['choices'][0]['message']['content'])) {
@@ -31,13 +35,19 @@ class chatbot_handler {
             }
 
             $content = $decoded_response['choices'][0]['message']['content'];
+            error_log("Groq content: " . $content);
+            
+            // Check if the content is a valid JSON
             $tool_call = json_decode($content, true);
             
-            if (isset($tool_call['tool_call'])) {
+            if (json_last_error() === JSON_ERROR_NONE && isset($tool_call['tool_call'])) {
                 $tool_name = $tool_call['tool_call']['name'];
                 $tool_params = $tool_call['tool_call']['parameters'];
                 
+                error_log("Executing tool: " . $tool_name . " with params: " . json_encode($tool_params));
+                
                 $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
+                error_log("Tool result: " . json_encode($tool_result));
                 
                 // Send the tool result back to Groq for final response formatting
                 $final_response = $this->sendToGroq(json_encode([
@@ -45,12 +55,16 @@ class chatbot_handler {
                     'tool_result' => $tool_result
                 ]));
                 
+                error_log("Final Groq response: " . $final_response);
+                
                 return $this->formatResponse($final_response);
             } else {
-                // If no tool call is needed, return the initial response
+                // If no valid tool call is found, return the initial response
+                error_log("No valid tool call found, returning initial response");
                 return $this->formatResponse($initial_response);
             }
         } catch (\Exception $e) {
+            error_log("Error in handleQuery: " . $e->getMessage());
             return "An error occurred: " . $e->getMessage();
         }
     }
