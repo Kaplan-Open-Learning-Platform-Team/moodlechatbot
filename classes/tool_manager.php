@@ -1,6 +1,6 @@
 <?php
 // classes/tool_manager.php
-//pull test
+
 
 namespace mod_moodlechatbot;
 
