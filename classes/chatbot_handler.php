@@ -7,7 +7,8 @@ require_once(__DIR__ . '/helper_functions.php');
 
 class chatbot_handler {
     private $tool_manager;
-    private $groq_client;
+    private $groq_api_key;
+    private $groq_api_url = 'https://api.groq.com/openai/v1/chat/completions';
 
     public function __construct() {
         global $CFG;
@@ -17,11 +18,8 @@ class chatbot_handler {
         // Register your tools here
         $this->tool_manager->register_tool('get_enrolled_courses', 'mod_moodlechatbot\tools\get_enrolled_courses');
         
-        // Initialize Groq client
-        require_once($CFG->dirroot . '/mod/moodlechatbot/vendor/autoload.php');
-        $this->groq_client = \Groq\Client::create([
-            'api_key' => $CFG->groqapikey
-        ]);
+        // Get Groq API key from Moodle config
+        $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
 
         debug_to_console("Chatbot handler initialized");
     }
@@ -66,7 +64,7 @@ class chatbot_handler {
         debug_to_console("Processing with Groq API");
         
         try {
-            $response = $this->groq_client->chat->completions->create([
+            $payload = json_encode([
                 'model' => 'mixtral-8x7b-32768',
                 'messages' => [
                     ['role' => 'system', 'content' => $this->getSystemPrompt()],
@@ -78,12 +76,35 @@ class chatbot_handler {
                 'stream' => false
             ]);
 
+            $ch = curl_init($this->groq_api_url);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, $payload);
+            curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                'Content-Type: application/json',
+                'Authorization: Bearer ' . $this->groq_api_key
+            ]);
+
+            $response = curl_exec($ch);
+            
+            if (curl_errno($ch)) {
+                throw new \Exception('Curl error: ' . curl_error($ch));
+            }
+            
+            curl_close($ch);
+
+            $decoded_response = json_decode($response, true);
+
             debug_to_console("Groq API response received");
             
-            return $this->formatResponse([
-                'success' => true,
-                'message' => $response->choices[0]->message->content
-            ]);
+            if (isset($decoded_response['choices'][0]['message']['content'])) {
+                return $this->formatResponse([
+                    'success' => true,
+                    'message' => $decoded_response['choices'][0]['message']['content']
+                ]);
+            } else {
+                throw new \Exception('Unexpected response format from Groq API');
+            }
 
         } catch (\Exception $e) {
             debug_to_console("Groq API error: " . $e->getMessage());
