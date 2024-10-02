@@ -35,22 +35,23 @@ class chatbot_handler {
     private $debug_log = [];
 
     public function __construct() {
+        $this->log_debug("Chatbot handler constructor called");
         $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
         $this->tool_manager = new tool_manager();
         $this->register_tools();
     }
 
     private function register_tools() {
+        $this->log_debug("Registering tools");
         $this->tool_manager->register_tool('get_enrolled_courses', '\mod_moodlechatbot\tools\get_enrolled_courses');
         // Register other tools here as needed
     }
 
     public function handleQuery($message) {
+        $this->log_debug("handleQuery called with message: " . $message);
         $response = ['success' => false, 'message' => '', 'debug' => []];
 
         try {
-            $this->log_debug("Handling query: " . $message);
-            
             $initial_response = $this->sendToGroq($message);
             $this->log_debug("Initial Groq response: " . $initial_response);
             
@@ -97,10 +98,13 @@ class chatbot_handler {
         }
 
         $response['debug'] = $this->debug_log;
-        return $this->cleanJsonResponse(json_encode($response));
+        $final_json = $this->cleanJsonResponse(json_encode($response));
+        $this->log_debug("Final JSON response: " . $final_json);
+        return $final_json;
     }
 
     private function sendToGroq($message) {
+        $this->log_debug("Sending to Groq: " . $message);
         $curl = curl_init();
 
         $payload = json_encode([
@@ -132,6 +136,7 @@ class chatbot_handler {
         }
         curl_close($curl);
 
+        $this->log_debug("Groq response: " . $response);
         return $response;
     }
 
@@ -154,6 +159,7 @@ class chatbot_handler {
 
     private function log_debug($message) {
         $this->debug_log[] = $message;
+        echo "<script>console.log('[MOD_MOODLECHATBOT] " . addslashes($message) . "');</script>";
     }
 
     private function cleanJsonResponse($response) {
