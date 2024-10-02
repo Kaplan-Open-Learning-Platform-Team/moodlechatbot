@@ -15,14 +15,7 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
         const logDebug = (debugInfo) => {
             console.group("Chatbot Debug Information");
             debugInfo.forEach(item => {
-                try {
-                    // Try to parse the debug item as JSON first
-                    const parsed = JSON.parse(item);
-                    console.log(parsed);
-                } catch (e) {
-                    // If it's not JSON, log it as a regular string
-                    console.log(item);
-                }
+                console.log(item);
             });
             console.groupEnd();
         };
@@ -42,6 +35,11 @@ define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
 
                 // Log the parsed response for debugging
                 console.log("Parsed response:", parsedResponse);
+
+                // Check if the response has a 'data' property
+                if (parsedResponse.data) {
+                    parsedResponse = parsedResponse.data;
+                }
 
                 // Handle the regular response
                 if (parsedResponse.courses) {
