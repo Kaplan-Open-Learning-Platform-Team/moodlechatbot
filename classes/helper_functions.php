@@ -1,37 +1,39 @@
 <?php
 
 function debug_to_console($data) {
-    if (is_array($data) || is_object($data)) {
-        $output = json_encode($data);
-    } else {
-        $output = strval($data);  // Convert to string
+    try {
+        // Convert data to string safely
+        if (is_array($data) || is_object($data)) {
+            $output = print_r($data, true);
+        } else {
+            $output = strval($data);
+        }
+        
+        // Escape special characters
+        $output = str_replace(
+            array("\\", "'", "\r", "\n"), 
+            array("\\\\", "\\'", "\\r", "\\n"), 
+            $output
+        );
+        
+        // Log to PHP error log as backup
+        error_log("[MOD_MOODLECHATBOT] " . $output);
+        
+        // Output to browser console
+        echo "<script>console.log('[MOD_MOODLECHATBOT] " . $output . "');</script>";
+        
+    } catch (\Exception $e) {
+        error_log("Error in debug_to_console: " . $e->getMessage());
     }
-    
-    // Escape any single quotes and newlines
-    $output = str_replace(
-        array("\\", "'", "\r", "\n"), 
-        array("\\\\", "\\'", "\\r", "\\n"), 
-        $output
-    );
-    
-    // Immediately output to console
-    echo "<script>console.log('[MOD_MOODLECHATBOT] " . $output . "');</script>";
-    
-    // Also store in global log for potential later use
-    global $debug_log;
-    if (!isset($debug_log)) {
-        $debug_log = [];
-    }
-    $debug_log[] = $output;
 }
 
 function output_debug_log() {
     global $debug_log;
     if (isset($debug_log) && is_array($debug_log)) {
+        echo "<script>console.log('=== MOD_MOODLECHATBOT DEBUG SUMMARY ===');</script>";
         foreach ($debug_log as $message) {
-            echo "<script>console.log('[MOD_MOODLECHATBOT_SUMMARY] " . $message . "');</script>";
+            echo "<script>console.log(" . json_encode($message) . ");</script>";
         }
-        // Clear the log after outputting
-        $debug_log = [];
+        echo "<script>console.log('=== END DEBUG SUMMARY ===');</script>";
     }
 }

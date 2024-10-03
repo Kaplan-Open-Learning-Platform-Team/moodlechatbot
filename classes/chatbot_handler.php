@@ -14,18 +14,19 @@ class chatbot_handler {
     private $tool_manager;
     private $debug_log = [];
 
-
     public function __construct() {
         debug_to_console("Chatbot handler constructor called");
-        $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
-        $this->tool_manager = new tool_manager();
-        $this->register_tools();
-    }
-
-    private function register_tools() {
-        debug_to_console("Registering tools");
-        $this->tool_manager->register_tool('get_enrolled_courses', '\mod_moodlechatbot\tools\get_enrolled_courses');
-        // Register other tools here as needed
+        try {
+            $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
+            if (empty($this->groq_api_key)) {
+                throw new \Exception("Groq API key is not configured");
+            }
+            $this->tool_manager = new tool_manager();
+            $this->register_tools();
+        } catch (\Exception $e) {
+            debug_to_console("Error in constructor: " . $e->getMessage());
+            throw $e;
+        }
     }
 
     public function handleQuery($message) {
@@ -33,62 +34,88 @@ class chatbot_handler {
         $response = ['success' => false, 'message' => '', 'debug' => []];
 
         try {
+            if (empty($message)) {
+                throw new \Exception("Empty message received");
+            }
+
             $initial_response = $this->sendToGroq($message);
-            debug_to_console(['Initial Groq response' => $initial_response]);
+            
+            if (empty($initial_response)) {
+                throw new \Exception("Empty response from Groq API");
+            }
+            
+            debug_to_console("Raw Groq response: " . $initial_response);
 
             $decoded_response = json_decode($initial_response, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception("Failed to decode Groq response: " . json_last_error_msg());
+            }
+
+            debug_to_console("Decoded Groq response: " . print_r($decoded_response, true));
 
             if (!isset($decoded_response['choices'][0]['message']['content'])) {
-                throw new \Exception("Unexpected response format from Groq API: " . $initial_response);
+                throw new \Exception("Unexpected response format from Groq API");
             }
 
             $content = $decoded_response['choices'][0]['message']['content'];
-            debug_to_console(['Groq content' => $content]);
+            debug_to_console("Content from Groq: " . $content);
 
-            $tool_call = json_decode($content, true);
-
-            if (json_last_error() === JSON_ERROR_NONE && isset($tool_call['tool_call'])) {
-                $tool_name = $tool_call['tool_call']['name'];
-                $tool_params = $tool_call['tool_call']['parameters'];
-
-                debug_to_console(['Executing tool' => $tool_name, 'With parameters' => $tool_params]);
-
-                $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
-                debug_to_console(['Tool result' => $tool_result]);
-
-                $final_response = $this->sendToGroq(json_encode([
-                    'user_message' => $message,
-                    'tool_result' => $tool_result
-                ]));
-                debug_to_console(['Final Groq response' => $final_response]);
-
-                $response['message'] = $this->formatResponse($final_response);
-            } else {
-                debug_to_console(['No valid tool call found, returning initial response' => $content]);
-                $response['message'] = $this->formatResponse($initial_response);
-            }
-
+            // Process the content and generate response
+            $response['message'] = $this->processContent($content, $message);
             $response['success'] = true;
 
         } catch (\Exception $e) {
-            debug_to_console(['Error in handleQuery' => $e->getMessage()]);
-            $response['message'] = "An error occurred: " . $e->getMessage();
+            $error_message = "Error processing query: " . $e->getMessage();
+            debug_to_console($error_message);
+            debug_to_console("Stack trace: " . $e->getTraceAsString());
+            $response['message'] = $error_message;
             $response['success'] = false;
         }
 
         $response['debug'] = $this->debug_log;
-        $final_json = json_encode($response, JSON_PRETTY_PRINT);
         
-        debug_to_console("Query complete. Final response: " . $final_json);
-        output_debug_log();
-        
-        return $final_json;
+        debug_to_console("Final response object: " . print_r($response, true));
+        return json_encode($response);
+    }
+
+    private function processContent($content, $original_message) {
+        try {
+            $tool_call = json_decode($content, true);
+            
+            if (json_last_error() === JSON_ERROR_NONE && isset($tool_call['tool_call'])) {
+                debug_to_console("Processing tool call: " . print_r($tool_call, true));
+                
+                $tool_name = $tool_call['tool_call']['name'];
+                $tool_params = $tool_call['tool_call']['parameters'];
+
+                $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
+                debug_to_console("Tool execution result: " . print_r($tool_result, true));
+
+                $final_response = $this->sendToGroq(json_encode([
+                    'user_message' => $original_message,
+                    'tool_result' => $tool_result
+                ]));
+
+                return $this->formatResponse($final_response);
+            } else {
+                debug_to_console("No tool call found, returning formatted content");
+                return $content;  // Return the content directly if no tool call
+            }
+        } catch (\Exception $e) {
+            debug_to_console("Error in processContent: " . $e->getMessage());
+            throw $e;  // Re-throw the exception to be caught by handleQuery
+        }
     }
 
     private function sendToGroq($message) {
-        debug_to_console(['Sending to Groq' => $message]);
-        $curl = curl_init();
+        debug_to_console("Preparing to send to Groq: " . $message);
+        
+        if (empty($this->groq_api_key)) {
+            throw new \Exception("Groq API key is not set");
+        }
 
+        $curl = curl_init();
+        
         $payload = json_encode([
             'model' => 'llama-3.2-90b-text-preview',
             'messages' => [
@@ -96,6 +123,8 @@ class chatbot_handler {
                 ['role' => 'user', 'content' => $message]
             ]
         ]);
+
+        debug_to_console("Payload to Groq: " . $payload);
 
         curl_setopt_array($curl, [
             CURLOPT_URL => $this->groq_api_url,
@@ -113,15 +142,22 @@ class chatbot_handler {
         ]);
 
         $response = curl_exec($curl);
-        if ($response === false) {
-            throw new \Exception(curl_error($curl));
-        }
+        $curl_error = curl_error($curl);
+        $http_code = curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        
         curl_close($curl);
 
-        debug_to_console(['Groq response' => $response]);
+        if ($response === false) {
+            throw new \Exception("Curl error: " . $curl_error);
+        }
+
+        if ($http_code !== 200) {
+            debug_to_console("HTTP Error: " . $http_code . ", Response: " . $response);
+            throw new \Exception("HTTP Error: " . $http_code);
+        }
+
         return $response;
     }
-
     private function getSystemPrompt() {
         return "You are a helpful assistant for a Moodle learning management system. " .
                "You have access to the following tools: " .
