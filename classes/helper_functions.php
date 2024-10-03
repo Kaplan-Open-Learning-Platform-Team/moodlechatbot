@@ -4,14 +4,13 @@ namespace mod_moodlechatbot;
 defined('MOODLE_INTERNAL') || die();
 
 class helper_functions {
-    // Log data to the browser console
+    // Logs data to Moodle's PHP error log for server-side debugging
     public static function debug_to_console($data) {
-        $output = json_encode($data);  // Convert the data to JSON format
-        echo "<script>console.log('Debug Objects: " . addslashes($output) . "');</script>";
+        error_log(print_r($data, true));  // This logs to the PHP error log
     }
 
-    // Optionally check if debugging is enabled (optional, but recommended for security)
+    // Check if Moodle's debugging mode is enabled
     public static function is_debugging_enabled() {
-        return debugging();  // Uses Moodle's built-in debugging check
+        return debugging();  // Uses Moodle's built-in debugging function
     }
 }
