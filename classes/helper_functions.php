@@ -1,26 +1,17 @@
 <?php
 namespace mod_moodlechatbot;
 
-// Initialize debug log as a global array
-global $DEBUG_LOG;
-$DEBUG_LOG = [];
+defined('MOODLE_INTERNAL') || die();
 
-function debug_to_console($data) {
-    global $DEBUG_LOG;
-    
-    if (is_array($data) || is_object($data)) {
-        $DEBUG_LOG[] = json_encode($data);
-    } else {
-        $DEBUG_LOG[] = (string)$data;
+class helper_functions {
+    // Log data to the browser console
+    public static function debug_to_console($data) {
+        $output = json_encode($data);  // Convert the data to JSON format
+        echo "<script>console.log('Debug Objects: " . addslashes($output) . "');</script>";
     }
-}
 
-function get_debug_log() {
-    global $DEBUG_LOG;
-    return $DEBUG_LOG;
-}
-
-function output_debug_log() {
-    global $DEBUG_LOG;
-    return $DEBUG_LOG ?? [];
+    // Optionally check if debugging is enabled (optional, but recommended for security)
+    public static function is_debugging_enabled() {
+        return debugging();  // Uses Moodle's built-in debugging check
+    }
 }
