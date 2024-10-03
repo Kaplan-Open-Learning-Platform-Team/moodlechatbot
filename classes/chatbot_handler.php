@@ -5,7 +5,7 @@ namespace mod_moodlechatbot;
 
 defined('MOODLE_INTERNAL') || die();
 
-use mod_moodlechatbot\util\debug_helper;
+use mod_moodlechatbot\debug_helper;
 
 class chatbot_handler {
     private $groq_api_key;
