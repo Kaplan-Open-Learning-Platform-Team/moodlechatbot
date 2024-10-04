@@ -1,9 +1,9 @@
-
 <?php
 // view.php
 
 require(__DIR__.'/../../config.php');
 require_once(__DIR__.'/lib.php');
+require_once(__DIR__.'/classes/helper_functions.php');
 
 // Course module id.
 $id = optional_param('id', 0, PARAM_INT);
@@ -42,5 +42,11 @@ echo html_writer::end_tag('div');
 
 // Include the JavaScript module
 $PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init');
+
+// Display debug logs
+if (debugging()) {
+    echo html_writer::tag('h3', 'Debug Logs');
+    \mod_moodlechatbot\debug_helper::display_logs();
+}
 
 echo $OUTPUT->footer();
