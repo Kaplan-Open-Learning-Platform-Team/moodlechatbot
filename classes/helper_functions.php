@@ -4,11 +4,13 @@ namespace mod_moodlechatbot;
 defined('MOODLE_INTERNAL') || die();
 
 class debug_helper {
-    private static $logs = [];
-
     public static function log($message, $data = null) {
-        global $CFG;
+        global $CFG, $SESSION;
         
+        if (!isset($SESSION->moodlechatbot_logs)) {
+            $SESSION->moodlechatbot_logs = [];
+        }
+
         $backtrace = debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 2);
         $caller = isset($backtrace[1]['function']) ? $backtrace[1]['function'] : '';
         $log = [
@@ -18,7 +20,7 @@ class debug_helper {
             'data' => $data
         ];
         
-        self::$logs[] = $log;
+        $SESSION->moodlechatbot_logs[] = $log;
 
         // Always log to PHP error log
         error_log("MoodleChatbot Debug: " . json_encode($log));
@@ -35,20 +37,23 @@ class debug_helper {
     }
 
     public static function get_logs() {
-        return self::$logs;
+        global $SESSION;
+        return isset($SESSION->moodlechatbot_logs) ? $SESSION->moodlechatbot_logs : [];
     }
 
     public static function clear_logs() {
-        self::$logs = [];
+        global $SESSION;
+        $SESSION->moodlechatbot_logs = [];
     }
 
     public static function display_logs() {
         global $OUTPUT;
         
-        if (!empty(self::$logs)) {
+        $logs = self::get_logs();
+        if (!empty($logs)) {
             echo $OUTPUT->box_start('generalbox', 'moodlechatbot-debug-log');
             echo "<h3>MoodleChatbot Debug Log</h3>";
-            echo "<pre>" . htmlspecialchars(json_encode(self::$logs, JSON_PRETTY_PRINT)) . "</pre>";
+            echo "<pre>" . htmlspecialchars(json_encode($logs, JSON_PRETTY_PRINT)) . "</pre>";
             echo $OUTPUT->box_end();
         }
     }

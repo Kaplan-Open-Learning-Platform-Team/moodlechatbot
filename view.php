@@ -30,6 +30,12 @@ $PAGE->set_title(format_string($moduleinstance->name));
 $PAGE->set_heading(format_string($course->fullname));
 $PAGE->set_context($modulecontext);
 
+// Handle log clearing
+if (optional_param('clear_logs', false, PARAM_BOOL) && confirm_sesskey()) {
+    \mod_moodlechatbot\debug_helper::clear_logs();
+    redirect($PAGE->url);
+}
+
 echo $OUTPUT->header();
 
 echo html_writer::start_tag('div', array('id' => 'moodlechatbot-container'));
@@ -46,6 +52,11 @@ $PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init');
 // Display debug logs
 if (debugging()) {
     echo html_writer::tag('h3', 'Debug Logs');
+    
+    // Add Clear Logs button
+    $clear_url = new moodle_url($PAGE->url, array('clear_logs' => 1, 'sesskey' => sesskey()));
+    echo html_writer::link($clear_url, 'Clear Logs', array('class' => 'btn btn-secondary'));
+    
     \mod_moodlechatbot\debug_helper::display_logs();
 }
 
