@@ -50,12 +50,14 @@ class debug_helper {
         global $OUTPUT;
         
         $logs = self::get_logs();
+        echo $OUTPUT->box_start('generalbox', 'moodlechatbot-debug-log');
+        echo "<h3>MoodleChatbot Debug Log</h3>";
         if (!empty($logs)) {
-            echo $OUTPUT->box_start('generalbox', 'moodlechatbot-debug-log');
-            echo "<h3>MoodleChatbot Debug Log</h3>";
             echo "<pre>" . htmlspecialchars(json_encode($logs, JSON_PRETTY_PRINT)) . "</pre>";
-            echo $OUTPUT->box_end();
+        } else {
+            echo "<p>No logs available.</p>";
         }
+        echo $OUTPUT->box_end();
     }
 }
 
