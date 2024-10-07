@@ -86,7 +86,7 @@ class mod_moodlechatbot_external extends external_api
         global $USER;
 
         // Parameter validation
-        echo "<script>console.log({$message})</script>";
+        echo "<script>console.log({strval($message)})</script>";
         debugging('Received message: ' . $message, DEBUG_DEVELOPER);
         $params = self::validate_parameters(self::get_bot_response_parameters(), ['message' => $message]);
         debugging('Validated parameters: ' . json_encode($params), DEBUG_DEVELOPER);
