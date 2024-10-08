@@ -43,9 +43,12 @@ class chatbot_handler {
                 
                 return $this->formatResponse($final_response);
             }
+            
+            // If no tool call is detected, return the initial response
+            return $this->formatResponse($initial_response);
         }
         
-        return $this->formatResponse($initial_response);
+        return "No valid response from Groq API";
     }
 
     private function sendToGroq($message) {
