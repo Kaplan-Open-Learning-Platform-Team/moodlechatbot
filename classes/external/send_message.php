@@ -32,16 +32,24 @@ class send_message extends external_api {
         global $CFG;
         require_once($CFG->dirroot . '/mod/moodlechatbot/classes/chatbot_handler.php');
     
+        debugging('Executing send_message with message: ' . $message, DEBUG_DEVELOPER);
+    
         $params = self::validate_parameters(self::execute_parameters(), ['message' => $message]);
     
         try {
+            debugging('Creating chatbot_handler instance', DEBUG_DEVELOPER);
             $handler = new \mod_moodlechatbot\chatbot_handler();
+            
+            debugging('Calling handleQuery method', DEBUG_DEVELOPER);
             $response = $handler->handleQuery($params['message']);
+    
+            debugging('Received response from handleQuery: ' . print_r($response, true), DEBUG_DEVELOPER);
     
             return [
                 'response' => $response
             ];
         } catch (Exception $e) {
+            debugging('Exception caught in send_message: ' . $e->getMessage(), DEBUG_DEVELOPER);
             throw new moodle_exception('error_executing_chatbot', 'mod_moodlechatbot', '', $e->getMessage());
         }
     }
