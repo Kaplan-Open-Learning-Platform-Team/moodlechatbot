@@ -31,50 +31,63 @@ class chatbot_handler {
         
         if (isset($decoded_response['choices'][0]['message']['content'])) {
             $content = $decoded_response['choices'][0]['message']['content'];
+            debugging('Attempting to parse content for tool call: ' . $content, DEBUG_DEVELOPER);
+            
             $tool_call = json_decode($content, true);
             
-            debugging('Parsed content for potential tool call: ' . print_r($tool_call, true), DEBUG_DEVELOPER);
-            
-            if (isset($tool_call['tool_call'])) {
-                $tool_name = $tool_call['tool_call']['name'];
-                $tool_params = $tool_call['tool_call']['parameters'];
+            if (json_last_error() === JSON_ERROR_NONE) {
+                debugging('Successfully parsed content as JSON', DEBUG_DEVELOPER);
                 
-                debugging('Tool call detected. Instantiating tool: ' . $tool_name, DEBUG_DEVELOPER);
-                
-                $tool = $this->tool_manager->get_tool($tool_name);
-                
-                if ($tool) {
-                    debugging('Executing tool: ' . $tool_name . ' with params: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
-                    $tool_result = $tool->execute($tool_params);
+                if (isset($tool_call['tool_call'])) {
+                    $tool_name = $tool_call['tool_call']['name'];
+                    $tool_params = $tool_call['tool_call']['parameters'];
                     
-                    debugging('Received data from tool execution: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
+                    debugging('Tool call detected. Tool: ' . $tool_name . ', Parameters: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
                     
-                    // Send the tool result back to Groq for final response formatting
-                    $final_response = $this->sendToGroq(json_encode([
-                        'user_message' => $message,
-                        'tool_result' => $tool_result
-                    ]));
-                    
-                    debugging('Received final response from Groq after tool execution: ' . $final_response, DEBUG_DEVELOPER);
-                    
-                    $formatted_response = $this->formatResponse($final_response);
-                    debugging('Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
-                    return $formatted_response;
+                    try {
+                        debugging('Attempting to get tool: ' . $tool_name, DEBUG_DEVELOPER);
+                        $tool = $this->tool_manager->get_tool($tool_name);
+                        
+                        debugging('Executing tool: ' . $tool_name, DEBUG_DEVELOPER);
+                        $tool_result = $tool->execute($tool_params);
+                        
+                        debugging('Tool execution completed. Raw result: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
+                        
+                        // Prepare data to send back to Groq
+                        $data_for_groq = json_encode([
+                            'user_message' => $message,
+                            'tool_result' => $tool_result
+                        ]);
+                        debugging('Data being sent back to Groq: ' . $data_for_groq, DEBUG_DEVELOPER);
+                        
+                        // Send the tool result back to Groq for final response formatting
+                        $final_response = $this->sendToGroq($data_for_groq);
+                        
+                        debugging('Received final response from Groq after tool execution: ' . $final_response, DEBUG_DEVELOPER);
+                        
+                        $formatted_response = $this->formatResponse($final_response);
+                        debugging('Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
+                        return $formatted_response;
+                    } catch (\Exception $e) {
+                        debugging('Error during tool execution: ' . $e->getMessage(), DEBUG_DEVELOPER);
+                        return "I'm sorry, but I encountered an error while processing your request.";
+                    }
                 } else {
-                    debugging('Tool not found: ' . $tool_name, DEBUG_DEVELOPER);
-                    return "Sorry, I couldn't find the tool to process your request.";
+                    debugging('No tool call detected in the parsed content', DEBUG_DEVELOPER);
                 }
+            } else {
+                debugging('Failed to parse content as JSON. Error: ' . json_last_error_msg(), DEBUG_DEVELOPER);
             }
             
-            // If no tool call is detected, return the initial response
-            debugging('No tool call detected, returning initial response', DEBUG_DEVELOPER);
+            // If no tool call is detected or parsing failed, return the initial response
+            debugging('Returning initial response as no tool call was processed', DEBUG_DEVELOPER);
             $formatted_response = $this->formatResponse($initial_response);
             debugging('Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
             return $formatted_response;
+        } else {
+            debugging('Unexpected response structure from Groq API', DEBUG_DEVELOPER);
+            return "I'm sorry, but I couldn't process your request at this time.";
         }
-        
-        debugging('No valid response from Groq API', DEBUG_DEVELOPER);
-        return "I'm sorry, but I couldn't process your request at this time.";
     }
 
     private function sendToGroq($message) {
@@ -127,7 +140,12 @@ class chatbot_handler {
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
-        $formatted = $decoded['choices'][0]['message']['content'] ?? "I'm sorry, but I couldn't generate a response at this time.";
+        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['choices'][0]['message']['content'])) {
+            $formatted = $decoded['choices'][0]['message']['content'];
+        } else {
+            debugging('Error decoding or accessing response content: ' . json_last_error_msg(), DEBUG_DEVELOPER);
+            $formatted = "I'm sorry, but I couldn't generate a response at this time.";
+        }
         debugging('Formatted response: ' . $formatted, DEBUG_DEVELOPER);
         return $formatted;
     }
