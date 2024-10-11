@@ -57,10 +57,10 @@ class chatbot_handler {
         
         // Step 5: Log Tool Call Identification
         if (isset($tool_call['tool_call'])) {
-            debugging('Debugging: Tool call identified: ' . $tool_call['tool_call']['name'], DEBUG_DEVELOPER);
+            $tool_name = $tool_call['tool_call']['name'];
+            debugging('Debugging: Identified tool call: ' . $tool_name, DEBUG_DEVELOPER);
             
             // Step 6: Log Tool Parameters
-            $tool_name = $tool_call['tool_call']['name'];
             $tool_params = $tool_call['tool_call']['parameters'];
             debugging('Debugging: Tool parameters: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
             
@@ -69,15 +69,12 @@ class chatbot_handler {
                 debugging('Debugging: Instantiating tool: ' . $tool_name, DEBUG_DEVELOPER);
                 $tool = $this->tool_manager->get_tool($tool_name);
                 
-                // Step 8: Log Tool Execution
+                // Step 8: Log Tool Execution (Method Call)
                 debugging('Debugging: Calling tool method: ' . $tool_name . '->execute(' . json_encode($tool_params) . ')', DEBUG_DEVELOPER);
                 $tool_result = $tool->execute($tool_params);
                 
                 // Step 9: Log Raw Tool Output
-                debugging('Debugging: Raw tool output: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
-                
-                // Step 10: Log Processed Tool Output (if applicable)
-                // In this case, we're not doing any additional processing, so we'll skip this step
+                debugging('Debugging: Tool Output: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
                 
                 // Prepare data to send back to Groq
                 $data_for_groq = json_encode([
@@ -85,14 +82,14 @@ class chatbot_handler {
                     'tool_result' => $tool_result
                 ]);
                 
-                // Step 11: Log Response Formatting
-                debugging('Debugging: Formatting Response', DEBUG_DEVELOPER);
-                
                 // Send the tool result back to Groq for final response formatting
                 $final_response = $this->sendToGroq($data_for_groq);
                 
-                // Step 12: Log Final Response to User
+                // Step 10: Log Final Response Formatting
                 $formatted_response = $this->formatResponse($final_response);
+                debugging('Debugging: Formatted response: ' . $formatted_response, DEBUG_DEVELOPER);
+                
+                // Step 11: Log Final Response to User
                 debugging('Debugging: Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
                 
                 return $formatted_response;
