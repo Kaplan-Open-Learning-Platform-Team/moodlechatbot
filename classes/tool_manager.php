@@ -22,7 +22,7 @@ class tool_manager {
         }
 
         $class = $this->tools[$name];
-        debugging("Tool class: $class", DEBUG_DEVELOPER);
+        debugging("Tool class found: $class", DEBUG_DEVELOPER);
 
         if (!class_exists($class)) {
             debugging("Class not found: $class", DEBUG_DEVELOPER);
@@ -31,7 +31,7 @@ class tool_manager {
 
         $reflection = new \ReflectionClass($class);
         if (!$reflection->isSubclassOf('mod_moodlechatbot\tool')) {
-            debugging("Invalid tool class: $class", DEBUG_DEVELOPER);
+            debugging("Invalid tool class (does not extend mod_moodlechatbot\tool): $class", DEBUG_DEVELOPER);
             throw new \moodle_exception('invalidtoolclass', 'mod_moodlechatbot', '', $class);
         }
 
@@ -40,14 +40,15 @@ class tool_manager {
     }
 
     public function execute_tool($name, $params = []) {
-        debugging("Executing tool: $name with params: " . print_r($params, true), DEBUG_DEVELOPER);
+        debugging("Starting execution of tool: $name with params: " . print_r($params, true), DEBUG_DEVELOPER);
         try {
             $tool = $this->get_tool($name);
+            debugging("Tool instance created, calling execute method", DEBUG_DEVELOPER);
             $result = $tool->execute($params);
-            debugging("Tool execution result: " . print_r($result, true), DEBUG_DEVELOPER);
+            debugging("Tool execution completed. Result: " . print_r($result, true), DEBUG_DEVELOPER);
             return $result;
         } catch (\Exception $e) {
-            debugging("Error executing tool: " . $e->getMessage(), DEBUG_DEVELOPER);
+            debugging("Error executing tool $name: " . $e->getMessage() . "\n" . $e->getTraceAsString(), DEBUG_DEVELOPER);
             throw new \moodle_exception('toolexecutionerror', 'mod_moodlechatbot', '', $name . ': ' . $e->getMessage());
         }
     }

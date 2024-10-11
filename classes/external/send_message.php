@@ -32,7 +32,7 @@ class send_message extends external_api {
         global $CFG;
         require_once($CFG->dirroot . '/mod/moodlechatbot/classes/chatbot_handler.php');
     
-        debugging('Executing send_message with message: ' . $message, DEBUG_DEVELOPER);
+        debugging('Starting execution of send_message with message: ' . $message, DEBUG_DEVELOPER);
     
         $params = self::validate_parameters(self::execute_parameters(), ['message' => $message]);
     
@@ -48,9 +48,11 @@ class send_message extends external_api {
             return [
                 'response' => $response
             ];
-        } catch (Exception $e) {
-            debugging('Exception caught in send_message: ' . $e->getMessage(), DEBUG_DEVELOPER);
-            throw new moodle_exception('error_executing_chatbot', 'mod_moodlechatbot', '', $e->getMessage());
+        } catch (\Exception $e) {
+            debugging('Exception caught in send_message: ' . $e->getMessage() . "\n" . $e->getTraceAsString(), DEBUG_DEVELOPER);
+            throw new \moodle_exception('error_executing_chatbot', 'mod_moodlechatbot', '', $e->getMessage());
+        } finally {
+            debugging('Finished execution of send_message', DEBUG_DEVELOPER);
         }
     }
 

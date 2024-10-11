@@ -27,19 +27,19 @@ class chatbot_handler {
         $initial_response = $this->sendToGroq($message);
         $decoded_response = json_decode($initial_response, true);
         
-        debugging('Decoded response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
+        debugging('Decoded response from Groq: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
         
         if (isset($decoded_response['choices'][0]['message']['content'])) {
             $content = $decoded_response['choices'][0]['message']['content'];
             $tool_call = json_decode($content, true);
             
-            debugging('Parsed content: ' . print_r($tool_call, true), DEBUG_DEVELOPER);
+            debugging('Parsed content for tool call: ' . print_r($tool_call, true), DEBUG_DEVELOPER);
             
             if (isset($tool_call['tool_call'])) {
                 $tool_name = $tool_call['tool_call']['name'];
                 $tool_params = $tool_call['tool_call']['parameters'];
                 
-                debugging('Executing tool: ' . $tool_name . ' with params: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
+                debugging('Tool call detected. Executing tool: ' . $tool_name . ' with params: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
                 
                 $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
                 
@@ -51,7 +51,7 @@ class chatbot_handler {
                     'tool_result' => $tool_result
                 ]));
                 
-                debugging('Final response: ' . $final_response, DEBUG_DEVELOPER);
+                debugging('Final response after tool execution: ' . $final_response, DEBUG_DEVELOPER);
                 
                 return $this->formatResponse($final_response);
             }
@@ -93,7 +93,12 @@ class chatbot_handler {
         ]);
     
         $response = curl_exec($curl);
+        $error = curl_error($curl);
         curl_close($curl);
+    
+        if ($error) {
+            debugging('cURL Error: ' . $error, DEBUG_DEVELOPER);
+        }
     
         debugging('Response from Groq: ' . $response, DEBUG_DEVELOPER);
         return $response;
