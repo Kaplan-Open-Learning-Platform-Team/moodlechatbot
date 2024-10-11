@@ -48,15 +48,9 @@ class chatbot_handler {
 
         $content = $decoded_response['choices'][0]['message']['content'];
         
-        $tool_call = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            // Step 5: Log Tool Call Identification (or Lack Thereof)
-            debugging('Debugging: No tool call detected.', DEBUG_DEVELOPER);
-            return $this->formatResponse($initial_response);
-        }
-        
         // Step 5: Log Tool Call Identification
-        if (isset($tool_call['tool_call'])) {
+        $tool_call = json_decode($content, true);
+        if (json_last_error() === JSON_ERROR_NONE && isset($tool_call['tool_call'])) {
             $tool_name = $tool_call['tool_call']['name'];
             debugging('Debugging: Identified tool call: ' . $tool_name, DEBUG_DEVELOPER);
             
@@ -99,6 +93,7 @@ class chatbot_handler {
             }
         } else {
             // No tool call detected, return the formatted response
+            debugging('Debugging: No tool call detected.', DEBUG_DEVELOPER);
             $formatted_response = $this->formatResponse($initial_response);
             debugging('Debugging: Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
             return $formatted_response;
