@@ -27,42 +27,54 @@ class chatbot_handler {
         $initial_response = $this->sendToGroq($message);
         $decoded_response = json_decode($initial_response, true);
         
-        debugging('Decoded response from Groq: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
+        debugging('Received and decoded response from Groq: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
         
         if (isset($decoded_response['choices'][0]['message']['content'])) {
             $content = $decoded_response['choices'][0]['message']['content'];
             $tool_call = json_decode($content, true);
             
-            debugging('Parsed content for tool call: ' . print_r($tool_call, true), DEBUG_DEVELOPER);
+            debugging('Parsed content for potential tool call: ' . print_r($tool_call, true), DEBUG_DEVELOPER);
             
             if (isset($tool_call['tool_call'])) {
                 $tool_name = $tool_call['tool_call']['name'];
                 $tool_params = $tool_call['tool_call']['parameters'];
                 
-                debugging('Tool call detected. Executing tool: ' . $tool_name . ' with params: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
+                debugging('Tool call detected. Instantiating tool: ' . $tool_name, DEBUG_DEVELOPER);
                 
-                $tool_result = $this->tool_manager->execute_tool($tool_name, $tool_params);
+                $tool = $this->tool_manager->get_tool($tool_name);
                 
-                debugging('Tool execution result: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
-                
-                // Send the tool result back to Groq for final response formatting
-                $final_response = $this->sendToGroq(json_encode([
-                    'user_message' => $message,
-                    'tool_result' => $tool_result
-                ]));
-                
-                debugging('Final response after tool execution: ' . $final_response, DEBUG_DEVELOPER);
-                
-                return $this->formatResponse($final_response);
+                if ($tool) {
+                    debugging('Executing tool: ' . $tool_name . ' with params: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
+                    $tool_result = $tool->execute($tool_params);
+                    
+                    debugging('Received data from tool execution: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
+                    
+                    // Send the tool result back to Groq for final response formatting
+                    $final_response = $this->sendToGroq(json_encode([
+                        'user_message' => $message,
+                        'tool_result' => $tool_result
+                    ]));
+                    
+                    debugging('Received final response from Groq after tool execution: ' . $final_response, DEBUG_DEVELOPER);
+                    
+                    $formatted_response = $this->formatResponse($final_response);
+                    debugging('Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
+                    return $formatted_response;
+                } else {
+                    debugging('Tool not found: ' . $tool_name, DEBUG_DEVELOPER);
+                    return "Sorry, I couldn't find the tool to process your request.";
+                }
             }
             
             // If no tool call is detected, return the initial response
             debugging('No tool call detected, returning initial response', DEBUG_DEVELOPER);
-            return $this->formatResponse($initial_response);
+            $formatted_response = $this->formatResponse($initial_response);
+            debugging('Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
+            return $formatted_response;
         }
         
         debugging('No valid response from Groq API', DEBUG_DEVELOPER);
-        return "No valid response from Groq API";
+        return "I'm sorry, but I couldn't process your request at this time.";
     }
 
     private function sendToGroq($message) {
@@ -115,7 +127,7 @@ class chatbot_handler {
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
-        $formatted = $decoded['choices'][0]['message']['content'] ?? "No response from Groq API";
+        $formatted = $decoded['choices'][0]['message']['content'] ?? "I'm sorry, but I couldn't generate a response at this time.";
         debugging('Formatted response: ' . $formatted, DEBUG_DEVELOPER);
         return $formatted;
     }
