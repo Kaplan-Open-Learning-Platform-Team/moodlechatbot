@@ -27,18 +27,24 @@ class chatbot_handler {
         debugging('Debugging: Sending message to Groq: ' . $message, DEBUG_DEVELOPER);
         
         $initial_response = $this->sendToGroq($message);
+        
+        if ($initial_response === false) {
+            debugging('Error: Failed to get a response from Groq API', DEBUG_DEVELOPER);
+            return "I'm sorry, but I encountered an error while communicating with the AI service.";
+        }
+        
         debugging('Debugging: Raw response from Groq: ' . $initial_response, DEBUG_DEVELOPER);
 
         $decoded_response = json_decode($initial_response, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             debugging('Error decoding JSON response: ' . json_last_error_msg(), DEBUG_DEVELOPER);
-            return "I'm sorry, but I encountered an error while processing your request.";
+            return "I'm sorry, but I encountered an error while processing the AI service response.";
         }
         debugging('Debugging: Decoded Groq response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
         
         if (!isset($decoded_response['choices'][0]['message']['content'])) {
             debugging('Unexpected response structure from Groq API', DEBUG_DEVELOPER);
-            return "I'm sorry, but I couldn't process your request at this time.";
+            return "I'm sorry, but I couldn't process your request at this time due to an unexpected response format.";
         }
 
         $content = $decoded_response['choices'][0]['message']['content'];
@@ -63,10 +69,14 @@ class chatbot_handler {
                 
                 // Send the tool result back to Groq for final response formatting
                 $final_response = $this->sendToGroq($data_for_groq);
+                if ($final_response === false) {
+                    debugging('Error: Failed to get a final response from Groq API', DEBUG_DEVELOPER);
+                    return "I'm sorry, but I encountered an error while processing the tool results.";
+                }
                 $formatted_response = $this->formatResponse($final_response);
             } catch (\Exception $e) {
                 debugging('Error during tool execution: ' . $e->getMessage(), DEBUG_DEVELOPER);
-                return "I'm sorry, but I encountered an error while processing your request.";
+                return "I'm sorry, but I encountered an error while processing your request with the specified tool.";
             }
         } else {
             debugging('Debugging: No tool call detected or extracted.', DEBUG_DEVELOPER);
@@ -77,7 +87,6 @@ class chatbot_handler {
         return $formatted_response;
     }
 
-    //attempts to extract tool call information from various formats:Full JSON response, JSON block within a markdown code block, Natural language description of a tool call
     private function extractToolCall($content) {
         // First, try to parse the entire content as JSON
         $json_content = json_decode($content, true);
@@ -112,7 +121,52 @@ class chatbot_handler {
     }
 
     private function sendToGroq($message) {
-        // ... (unchanged)
+        $curl = curl_init();
+    
+        $payload = json_encode([
+            'model' => 'llama-3.2-90b-text-preview',
+            'messages' => [
+                ['role' => 'system', 'content' => $this->getSystemPrompt()],
+                ['role' => 'user', 'content' => $message]
+            ]
+        ]);
+    
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $this->groq_api_url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $this->groq_api_key,
+                'Content-Type: application/json'
+            ],
+        ]);
+    
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        $info = curl_getinfo($curl);
+        curl_close($curl);
+    
+        if ($err) {
+            debugging('cURL Error: ' . $err, DEBUG_DEVELOPER);
+            return false;
+        }
+    
+        if ($info['http_code'] != 200) {
+            debugging('HTTP Error: ' . $info['http_code'] . ' - Response: ' . $response, DEBUG_DEVELOPER);
+            return false;
+        }
+    
+        if (empty($response)) {
+            debugging('Error: Empty response from Groq API', DEBUG_DEVELOPER);
+            return false;
+        }
+    
+        return $response;
     }
 
     private function getSystemPrompt() {
@@ -123,7 +177,6 @@ class chatbot_handler {
                "a 'tool_call' key with 'name' and 'parameters' subkeys. Otherwise, respond normally. " .
                "After receiving tool results, provide a natural language response to the user.";
     }
-
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
