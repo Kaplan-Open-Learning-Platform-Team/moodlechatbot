@@ -77,6 +77,7 @@ class chatbot_handler {
         return $formatted_response;
     }
 
+    //attempts to extract tool call information from various formats:Full JSON response, JSON block within a markdown code block, Natural language description of a tool call
     private function extractToolCall($content) {
         // First, try to parse the entire content as JSON
         $json_content = json_decode($content, true);
