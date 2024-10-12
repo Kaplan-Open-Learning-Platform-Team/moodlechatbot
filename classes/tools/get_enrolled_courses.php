@@ -6,7 +6,7 @@ defined('MOODLE_INTERNAL') || die();
 require_once(__DIR__ . '/../tool.php');
 
 class get_enrolled_courses extends \mod_moodlechatbot\tool {
-    public function execute(array $params = []): array {
+    public function execute($params = []): array {
         global $USER, $DB;
     
         debugging('Starting execution of get_enrolled_courses tool', DEBUG_DEVELOPER);
