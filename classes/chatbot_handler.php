@@ -90,11 +90,15 @@ class chatbot_handler {
     private function extractToolCall($content) {
         debugging('Debugging: Attempting to extract tool call from: ' . $content, DEBUG_DEVELOPER);
         
-        // Remove code block markers if present
-        $content = preg_replace('/```json\s*|\s*```/', '', $content);
+        // Use regex to find JSON object within the content
+        if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
+            $json_string = $matches[1];
+        } else {
+            $json_string = $content;
+        }
         
-        // Parse the content as JSON
-        $parsed = json_decode($content, true);
+        // Parse the JSON string
+        $parsed = json_decode($json_string, true);
         
         if (json_last_error() === JSON_ERROR_NONE && isset($parsed['tool_call'])) {
             debugging('Debugging: Successfully extracted tool call', DEBUG_DEVELOPER);
