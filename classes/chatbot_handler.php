@@ -90,11 +90,8 @@ class chatbot_handler {
     private function extractToolCall($content) {
         debugging('Debugging: Attempting to extract tool call from: ' . $content, DEBUG_DEVELOPER);
         
-        // Remove any surrounding quotes if present
-        $content = trim($content, "'\"");
-        
-        // Replace single quotes with double quotes for JSON parsing
-        $content = str_replace("'", '"', $content);
+        // Remove code block markers if present
+        $content = preg_replace('/```json\s*|\s*```/', '', $content);
         
         // Parse the content as JSON
         $parsed = json_decode($content, true);
