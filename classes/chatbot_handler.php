@@ -88,19 +88,23 @@ class chatbot_handler {
     }
 
     private function extractToolCall($content) {
-        // First, try to parse the entire content as JSON
-        $json_content = json_decode($content, true);
-        if (json_last_error() === JSON_ERROR_NONE && isset($json_content['tool_call'])) {
-            return $json_content['tool_call'];
-        }
-
-        // If that fails, try to find and parse a JSON block within the content
-        if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
+        debugging('Debugging: Attempting to extract tool call from: ' . $content, DEBUG_DEVELOPER);
+        
+        // First, try to find a JSON block within the content
+        if (preg_match('/```(?:json)?\s*(.*?)\s*```/s', $content, $matches)) {
             $json_block = $matches[1];
             $parsed_json = json_decode($json_block, true);
             if (json_last_error() === JSON_ERROR_NONE && isset($parsed_json['tool_call'])) {
+                debugging('Debugging: Extracted tool call from JSON block', DEBUG_DEVELOPER);
                 return $parsed_json['tool_call'];
             }
+        }
+
+        // If that fails, try to parse the entire content as JSON
+        $json_content = json_decode($content, true);
+        if (json_last_error() === JSON_ERROR_NONE && isset($json_content['tool_call'])) {
+            debugging('Debugging: Extracted tool call from full content JSON', DEBUG_DEVELOPER);
+            return $json_content['tool_call'];
         }
 
         // If no JSON found, try to extract tool information from natural language
@@ -111,12 +115,14 @@ class chatbot_handler {
             if (preg_match('/parameters:\s*(\{.*?\})/s', $content, $param_matches)) {
                 $parameters = json_decode($param_matches[1], true) ?: [];
             }
+            debugging('Debugging: Extracted tool call from natural language', DEBUG_DEVELOPER);
             return [
                 'name' => $tool_name,
                 'parameters' => $parameters
             ];
         }
 
+        debugging('Debugging: Failed to extract tool call', DEBUG_DEVELOPER);
         return null;
     }
 
