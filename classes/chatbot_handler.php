@@ -162,7 +162,7 @@ class chatbot_handler {
         return "You are a helpful assistant for a Moodle learning management system. " .
                "You have access to the following tools: " .
                "1. get_enrolled_courses: Retrieves the courses the current user is enrolled in. " .
-               "If a user's query requires using a tool, respond with a JSON object containing " .
+               "If a user's query requires using a tool, respond with ONLY a JSON object containing " .
                "a 'tool_call' key with 'name' and 'parameters' subkeys. Otherwise, respond normally. " .
                "After receiving tool results, provide a natural language response to the user.";
     }
