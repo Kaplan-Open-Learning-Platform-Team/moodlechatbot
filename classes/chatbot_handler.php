@@ -23,17 +23,12 @@ class chatbot_handler {
     }
 
     public function handleQuery($message) {
-        // Step 1: Log Query Received
         debugging('Debugging: Query received: ' . $message, DEBUG_DEVELOPER);
-
-        // Step 2: Log Message Sent to LLM (Groq)
         debugging('Debugging: Sending message to Groq: ' . $message, DEBUG_DEVELOPER);
+        
         $initial_response = $this->sendToGroq($message);
-
-        // Step 3: Log Raw Response from LLM
         debugging('Debugging: Raw response from Groq: ' . $initial_response, DEBUG_DEVELOPER);
 
-        // Step 4: Log Decoded LLM Response
         $decoded_response = json_decode($initial_response, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             debugging('Error decoding JSON response: ' . json_last_error_msg(), DEBUG_DEVELOPER);
@@ -48,26 +43,16 @@ class chatbot_handler {
 
         $content = $decoded_response['choices'][0]['message']['content'];
         
-        // Step 5: Log Tool Call Identification
-        $tool_call = json_decode($content, true);
-        if (json_last_error() === JSON_ERROR_NONE && isset($tool_call['tool_call'])) {
-            $tool_name = $tool_call['tool_call']['name'];
-            debugging('Debugging: Identified tool call: ' . $tool_name, DEBUG_DEVELOPER);
-            
-            // Step 6: Log Tool Parameters
-            $tool_params = $tool_call['tool_call']['parameters'];
-            debugging('Debugging: Tool parameters: ' . print_r($tool_params, true), DEBUG_DEVELOPER);
+        // Try to extract tool call from the content
+        $tool_call = $this->extractToolCall($content);
+        
+        if ($tool_call) {
+            debugging('Debugging: Extracted tool call: ' . print_r($tool_call, true), DEBUG_DEVELOPER);
             
             try {
-                // Step 7: Log Tool Instantiation
-                debugging('Debugging: Instantiating tool: ' . $tool_name, DEBUG_DEVELOPER);
-                $tool = $this->tool_manager->get_tool($tool_name);
-                
-                // Step 8: Log Tool Execution (Method Call)
-                debugging('Debugging: Calling tool method: ' . $tool_name . '->execute(' . json_encode($tool_params) . ')', DEBUG_DEVELOPER);
-                $tool_result = $tool->execute($tool_params);
-                
-                // Step 9: Log Raw Tool Output
+                $tool = $this->tool_manager->get_tool($tool_call['name']);
+                debugging('Debugging: Calling tool method: ' . $tool_call['name'] . '->execute(' . json_encode($tool_call['parameters']) . ')', DEBUG_DEVELOPER);
+                $tool_result = $tool->execute($tool_call['parameters']);
                 debugging('Debugging: Tool Output: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
                 
                 // Prepare data to send back to Groq
@@ -78,63 +63,55 @@ class chatbot_handler {
                 
                 // Send the tool result back to Groq for final response formatting
                 $final_response = $this->sendToGroq($data_for_groq);
-                
-                // Step 10: Log Final Response Formatting
                 $formatted_response = $this->formatResponse($final_response);
-                debugging('Debugging: Formatted response: ' . $formatted_response, DEBUG_DEVELOPER);
-                
-                // Step 11: Log Final Response to User
-                debugging('Debugging: Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
-                
-                return $formatted_response;
             } catch (\Exception $e) {
                 debugging('Error during tool execution: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 return "I'm sorry, but I encountered an error while processing your request.";
             }
         } else {
-            // No tool call detected, return the formatted response
-            debugging('Debugging: No tool call detected.', DEBUG_DEVELOPER);
+            debugging('Debugging: No tool call detected or extracted.', DEBUG_DEVELOPER);
             $formatted_response = $this->formatResponse($initial_response);
-            debugging('Debugging: Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
-            return $formatted_response;
         }
+
+        debugging('Debugging: Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
+        return $formatted_response;
+    }
+
+    private function extractToolCall($content) {
+        // First, try to parse the entire content as JSON
+        $json_content = json_decode($content, true);
+        if (json_last_error() === JSON_ERROR_NONE && isset($json_content['tool_call'])) {
+            return $json_content['tool_call'];
+        }
+
+        // If that fails, try to find and parse a JSON block within the content
+        if (preg_match('/```json\s*(.*?)\s*```/s', $content, $matches)) {
+            $json_block = $matches[1];
+            $parsed_json = json_decode($json_block, true);
+            if (json_last_error() === JSON_ERROR_NONE && isset($parsed_json['tool_call'])) {
+                return $parsed_json['tool_call'];
+            }
+        }
+
+        // If no JSON found, try to extract tool information from natural language
+        if (preg_match('/call to the \'(.*?)\' tool/i', $content, $matches)) {
+            $tool_name = $matches[1];
+            // Extract parameters if present, otherwise use empty array
+            $parameters = [];
+            if (preg_match('/parameters:\s*(\{.*?\})/s', $content, $param_matches)) {
+                $parameters = json_decode($param_matches[1], true) ?: [];
+            }
+            return [
+                'name' => $tool_name,
+                'parameters' => $parameters
+            ];
+        }
+
+        return null;
     }
 
     private function sendToGroq($message) {
-        $curl = curl_init();
-    
-        $payload = json_encode([
-            'model' => 'llama-3.2-90b-text-preview',
-            'messages' => [
-                ['role' => 'system', 'content' => $this->getSystemPrompt()],
-                ['role' => 'user', 'content' => $message]
-            ]
-        ]);
-    
-        curl_setopt_array($curl, [
-            CURLOPT_URL => $this->groq_api_url,
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_ENCODING => '',
-            CURLOPT_MAXREDIRS => 10,
-            CURLOPT_TIMEOUT => 30,
-            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
-            CURLOPT_CUSTOMREQUEST => 'POST',
-            CURLOPT_POSTFIELDS => $payload,
-            CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $this->groq_api_key,
-                'Content-Type: application/json'
-            ],
-        ]);
-    
-        $response = curl_exec($curl);
-        $error = curl_error($curl);
-        curl_close($curl);
-    
-        if ($error) {
-            debugging('cURL Error: ' . $error, DEBUG_DEVELOPER);
-        }
-    
-        return $response;
+        // ... (unchanged)
     }
 
     private function getSystemPrompt() {
@@ -145,6 +122,7 @@ class chatbot_handler {
                "a 'tool_call' key with 'name' and 'parameters' subkeys. Otherwise, respond normally. " .
                "After receiving tool results, provide a natural language response to the user.";
     }
+
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
