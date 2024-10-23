@@ -104,6 +104,9 @@ class mod_moodlechatbot_external extends external_api
         $enableTools = get_config('mod_moodlechatbot', 'enabletools');
         debugging('Tools enabled: ' . ($enableTools ? 'Yes' : 'No'), DEBUG_DEVELOPER);
 
+        // Debug current conversation history before adding a new message
+        debugging('Current conversation history: ' . json_encode(self::$conversationHistory), DEBUG_DEVELOPER);
+
         // Define tools
         $tools = [
             [
@@ -139,6 +142,7 @@ class mod_moodlechatbot_external extends external_api
 
         // Append the new message to conversation history
         self::$conversationHistory[] = ['role' => 'user', 'content' => $params['message']];
+        debugging('Updated conversation history: ' . json_encode(self::$conversationHistory), DEBUG_DEVELOPER);
 
         // Prepare messages including history
         $messages = array_merge(
@@ -150,7 +154,7 @@ class mod_moodlechatbot_external extends external_api
 
         try {
             while (true) {
-                debugging('Preparing to send message to Groq API.', DEBUG_DEVELOPER);
+                debugging('Starting new API request iteration', DEBUG_DEVELOPER);
                 $completionParams = [
                     'model' => 'llama3-groq-70b-8192-tool-use-preview',
                     'messages' => $messages,
@@ -161,9 +165,10 @@ class mod_moodlechatbot_external extends external_api
                 if ($enableTools) {
                     $completionParams['tools'] = $tools;
                     $completionParams['tool_choice'] = 'auto';
+                    debugging('Added tools to completion parameters: ' . json_encode($tools), DEBUG_DEVELOPER);
                 }
 
-                debugging('Completion parameters: ' . json_encode($completionParams), DEBUG_DEVELOPER);
+                debugging('Sending completion parameters to Groq: ' . json_encode($completionParams), DEBUG_DEVELOPER);
                 $response = self::$groq->chat()->completions()->create($completionParams);
                 debugging('Received response from Groq API: ' . json_encode($response), DEBUG_DEVELOPER);
                 $choice = $response['choices'][0];
@@ -171,24 +176,30 @@ class mod_moodlechatbot_external extends external_api
                 // Check if there are tool calls in the response
                 if (isset($choice['message']['tool_calls'])) {
                     $toolCalls = $choice['message']['tool_calls'];
+                    debugging('Tool calls detected: ' . json_encode($toolCalls), DEBUG_DEVELOPER);
                     $toolResults = [];
 
                     // Loop through each tool call and execute the corresponding function
                     foreach ($toolCalls as $toolCall) {
                         $functionName = $toolCall['function']['name'];
                         $functionArgs = json_decode($toolCall['function']['arguments'], true);
+                        debugging('Executing tool call: ' . $functionName . ' with args ' . json_encode($functionArgs), DEBUG_DEVELOPER);
 
                         // Automatically pass the current user ID for enrolled courses
                         if ($functionName === 'get_user_enrolled_courses') {
                             $functionArgs = ['user_id' => $USER->id]; // Use the current user's ID
+                            debugging('Modified args for enrolled courses: ' . json_encode($functionArgs), DEBUG_DEVELOPER);
                         }
 
                         // Execute the tool function with the arguments
-                        $toolResults[] = self::execute_tool($functionName, $functionArgs);
+                        $result = self::execute_tool($functionName, $functionArgs);
+                        debugging('Tool execution result: ' . $result, DEBUG_DEVELOPER);
+                        $toolResults[] = $result;
                     }
 
                     // Append the results of the tool execution to the bot's response
                     $botResponse .= implode("\n\n", $toolResults);
+                    debugging('Updated messages after tool results: ' . $botResponse, DEBUG_DEVELOPER);
 
                     // Update the conversation with the tool results
                     self::$conversationHistory[] = [
@@ -199,6 +210,7 @@ class mod_moodlechatbot_external extends external_api
                         'role' => 'user',
                         'content' => "Tool Result: \n" . implode("\n\n", $toolResults)
                     ];
+                    debugging('Updated messages after tool results: ' . json_encode($messages), DEBUG_DEVELOPER);
                 } else if (isset($choice['message']['content'])) {
                     // If there's no tool call, return the content from the chatbot
                     $botResponse .= $choice['message']['content'];
