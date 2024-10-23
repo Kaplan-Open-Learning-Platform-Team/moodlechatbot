@@ -19,6 +19,7 @@ class chatbot_handler {
 
     private function register_tools() {
         $this->tool_manager->register_tool('get_enrolled_courses', '\mod_moodlechatbot\tools\get_enrolled_courses');
+        $this->tool_manager->register_tool('get_upcoming_assignments', '\mod_moodlechatbot\tools\get_upcoming_assignments');
         debugging('Tools registered', DEBUG_DEVELOPER);
     }
 
@@ -162,6 +163,7 @@ class chatbot_handler {
         return "You are a helpful assistant for a Moodle learning management system. " .
                "You have access to the following tools: " .
                "1. get_enrolled_courses: Retrieves the courses the current user is enrolled in. " .
+               "2. get_upcoming_assignments: Retrieves upcoming assignments with optional timeframe parameter (week/month/all). " .
                "If a user's query requires using a tool, respond with ONLY a JSON object containing " .
                "a 'tool_call' key with 'name' and 'parameters' subkeys. Otherwise, respond normally. " .
                "After receiving tool results, provide a natural language response to the user's query.";
