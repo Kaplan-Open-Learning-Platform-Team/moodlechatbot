@@ -23,7 +23,7 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
                 'week' => $now + WEEKSECS,
                 'month' => $now + (WEEKSECS * 4),
                 'year' => $now + (WEEKSECS * 52),
-                default => $now + (WEEKSECS * 52 * 2)
+                default => 0 // No end time for 'all'
             };
             
             // Get user's courses
@@ -55,36 +55,37 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
             $courseids = array_keys($courses);
             debugging('Course IDs: ' . implode(',', $courseids), DEBUG_DEVELOPER);
             
-            // Build query conditions
-            $params = [
-                'moduleid' => $assignmodule->id,
-                'now' => $now
-            ];
-            
-            // Simplified SQL query
+            // First, let's check all assignments in these courses
             $sql = "SELECT cm.id, cm.instance, a.name, a.duedate, c.fullname as coursename
                    FROM {course_modules} cm
                    JOIN {assign} a ON a.id = cm.instance
                    JOIN {course} c ON c.id = cm.course
                    WHERE cm.module = :moduleid 
                    AND cm.course IN (" . implode(',', $courseids) . ")
-                   AND a.duedate > :now";
+                   ORDER BY a.duedate ASC";
             
-            if ($timeframe !== 'all') {
-                $sql .= " AND a.duedate <= :endtime";
-                $params['endtime'] = $endtime;
-            }
+            debugging('Checking all assignments with SQL: ' . $sql, DEBUG_DEVELOPER);
+            $allAssignments = $DB->get_records_sql($sql, ['moduleid' => $assignmodule->id]);
+            debugging('All assignments found: ' . print_r($allAssignments, true), DEBUG_DEVELOPER);
             
-            $sql .= " ORDER BY a.duedate ASC";
-            
-            debugging('Executing SQL query: ' . $sql, DEBUG_DEVELOPER);
-            debugging('Query params: ' . print_r($params, true), DEBUG_DEVELOPER);
-            
-            $assignments = $DB->get_records_sql($sql, $params);
-            debugging('Found assignments: ' . print_r($assignments, true), DEBUG_DEVELOPER);
-            
+            // Now filter assignments based on timeframe
             $result = [];
-            foreach ($assignments as $assignment) {
+            foreach ($allAssignments as $assignment) {
+                // Skip assignments without due dates
+                if (empty($assignment->duedate)) {
+                    continue;
+                }
+                
+                // Skip assignments that are already due
+                if ($assignment->duedate <= $now) {
+                    continue;
+                }
+                
+                // For timeframes other than 'all', check end time
+                if ($timeframe !== 'all' && $assignment->duedate > $endtime) {
+                    continue;
+                }
+                
                 // Calculate days and hours until due
                 $daysUntilDue = ceil(($assignment->duedate - $now) / DAYSECS);
                 $hoursUntilDue = ceil(($assignment->duedate - $now) / HOURSECS);
