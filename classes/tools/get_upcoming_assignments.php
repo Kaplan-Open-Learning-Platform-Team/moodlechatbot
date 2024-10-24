@@ -54,7 +54,7 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
             
             $result = [];
             foreach ($assignments as $assignment) {
-                // Calculate days until due
+                // Calculate days and hours until due
                 $daysUntilDue = ceil(($assignment->duedate - $now) / DAYSECS);
                 $hoursUntilDue = ceil(($assignment->duedate - $now) / HOURSECS);
                 
@@ -65,8 +65,7 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
                     'duedate' => (int)$assignment->duedate,
                     'duedateformatted' => userdate($assignment->duedate),
                     'days_until_due' => (int)$daysUntilDue,
-                    'hours_until_due' => (int)$hoursUntilDue,
-                    'relative_time' => $this->get_relative_time_string($daysUntilDue, $hoursUntilDue)
+                    'hours_until_due' => (int)$hoursUntilDue
                 ];
             }
             
@@ -92,26 +91,6 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
             ];
         } finally {
             debugging('Finished execution of get_upcoming_assignments tool', DEBUG_DEVELOPER);
-        }
-    }
-
-    private function get_relative_time_string($days, $hours) {
-        if ($days > 30) {
-            $months = floor($days / 30);
-            return "due in about $months month" . ($months > 1 ? 's' : '');
-        } elseif ($days > 7) {
-            $weeks = floor($days / 7);
-            return "due in about $weeks week" . ($weeks > 1 ? 's' : '');
-        } elseif ($days > 1) {
-            return "due in $days days";
-        } elseif ($days == 1) {
-            return "due tomorrow";
-        } elseif ($hours > 1) {
-            return "due in $hours hours";
-        } elseif ($hours == 1) {
-            return "due in 1 hour";
-        } else {
-            return "due very soon";
         }
     }
 }
