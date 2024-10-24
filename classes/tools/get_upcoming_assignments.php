@@ -10,36 +10,19 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
         global $USER, $DB;
     
         debugging('Starting execution of get_upcoming_assignments tool', DEBUG_DEVELOPER);
-        debugging('Input params: ' . print_r($params, true), DEBUG_DEVELOPER);
-    
+        
         try {
             $userid = $params['userid'] ?? $USER->id;
-            $timeframe = $params['timeframe'] ?? 'all';
-            debugging('Using user ID: ' . $userid . ' and timeframe: ' . $timeframe, DEBUG_DEVELOPER);
-            
-            // Calculate time range based on timeframe
             $now = time();
-            $endtime = match($timeframe) {
-                'week' => $now + WEEKSECS,
-                'month' => $now + (WEEKSECS * 4),
-                'year' => $now + (WEEKSECS * 52),
-                default => 0 // No end time for 'all'
-            };
             
             // Get user's courses
-            debugging('Retrieving enrolled courses', DEBUG_DEVELOPER);
             $courses = enrol_get_users_courses($userid, true);
-            debugging('Found courses: ' . print_r($courses, true), DEBUG_DEVELOPER);
-            
             if (empty($courses)) {
                 debugging('No enrolled courses found', DEBUG_DEVELOPER);
                 return [
                     'success' => true,
                     'message' => 'No enrolled courses found',
-                    'current_time' => [
-                        'timestamp' => $now,
-                        'formatted' => userdate($now)
-                    ],
+                    'current_time' => $now,
                     'assignments' => []
                 ];
             }
@@ -50,65 +33,46 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
                 debugging('Assignment module not found', DEBUG_DEVELOPER);
                 throw new \moodle_exception('Assignment module not found');
             }
-            debugging('Found assign module: ' . print_r($assignmodule, true), DEBUG_DEVELOPER);
             
             $courseids = array_keys($courses);
-            debugging('Course IDs: ' . implode(',', $courseids), DEBUG_DEVELOPER);
             
-            // Build query conditions
-            $params = [
-                'moduleid' => $assignmodule->id,
-                'now' => $now
-            ];
-            
-            // Build SQL query
+            // Get all future assignments
             $sql = "SELECT cm.id, cm.instance, a.name, a.duedate, c.fullname as coursename
                    FROM {course_modules} cm
                    JOIN {assign} a ON a.id = cm.instance
                    JOIN {course} c ON c.id = cm.course
                    WHERE cm.module = :moduleid 
                    AND cm.course IN (" . implode(',', $courseids) . ")
-                   AND a.duedate > :now";
+                   AND a.duedate > :now
+                   ORDER BY a.duedate ASC";
             
-            if ($timeframe !== 'all' && $endtime > 0) {
-                $sql .= " AND a.duedate <= :endtime";
-                $params['endtime'] = $endtime;
-            }
-            
-            $sql .= " ORDER BY a.duedate ASC";
+            $params = [
+                'moduleid' => $assignmodule->id,
+                'now' => $now
+            ];
             
             debugging('Executing SQL query: ' . $sql, DEBUG_DEVELOPER);
-            debugging('Query params: ' . print_r($params, true), DEBUG_DEVELOPER);
-            
             $assignments = $DB->get_records_sql($sql, $params);
             debugging('Found assignments: ' . print_r($assignments, true), DEBUG_DEVELOPER);
             
             $result = [];
             foreach ($assignments as $assignment) {
-                // Calculate days and hours until due
                 $daysUntilDue = ceil(($assignment->duedate - $now) / DAYSECS);
-                $hoursUntilDue = ceil(($assignment->duedate - $now) / HOURSECS);
                 
                 $result[] = [
-                    'id' => (int)$assignment->id,
-                    'name' => (string)$assignment->name,
-                    'course' => (string)$assignment->coursename,
+                    'name' => $assignment->name,
+                    'course' => $assignment->coursename,
                     'duedate' => (int)$assignment->duedate,
-                    'duedateformatted' => userdate($assignment->duedate),
-                    'days_until_due' => (int)$daysUntilDue,
-                    'hours_until_due' => (int)$hoursUntilDue
+                    'days_until_due' => (int)$daysUntilDue
                 ];
             }
             
             $response = [
                 'success' => true,
-                'message' => 'Found ' . count($result) . ' upcoming assignments',
-                'current_time' => [
-                    'timestamp' => $now,
-                    'formatted' => userdate($now)
-                ],
+                'current_time' => $now,
                 'assignments' => $result
             ];
+            
             debugging('Prepared response: ' . print_r($response, true), DEBUG_DEVELOPER);
             return $response;
             
@@ -120,8 +84,6 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
                 'error' => $e->getMessage(),
                 'assignments' => []
             ];
-        } finally {
-            debugging('Finished execution of get_upcoming_assignments tool', DEBUG_DEVELOPER);
         }
     }
 }
