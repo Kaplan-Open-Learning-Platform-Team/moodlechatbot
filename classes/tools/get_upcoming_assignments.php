@@ -55,37 +55,36 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
             $courseids = array_keys($courses);
             debugging('Course IDs: ' . implode(',', $courseids), DEBUG_DEVELOPER);
             
-            // First, let's check all assignments in these courses
+            // Build query conditions
+            $params = [
+                'moduleid' => $assignmodule->id,
+                'now' => $now
+            ];
+            
+            // Build SQL query
             $sql = "SELECT cm.id, cm.instance, a.name, a.duedate, c.fullname as coursename
                    FROM {course_modules} cm
                    JOIN {assign} a ON a.id = cm.instance
                    JOIN {course} c ON c.id = cm.course
                    WHERE cm.module = :moduleid 
                    AND cm.course IN (" . implode(',', $courseids) . ")
-                   ORDER BY a.duedate ASC";
+                   AND a.duedate > :now";
             
-            debugging('Checking all assignments with SQL: ' . $sql, DEBUG_DEVELOPER);
-            $allAssignments = $DB->get_records_sql($sql, ['moduleid' => $assignmodule->id]);
-            debugging('All assignments found: ' . print_r($allAssignments, true), DEBUG_DEVELOPER);
+            if ($timeframe !== 'all' && $endtime > 0) {
+                $sql .= " AND a.duedate <= :endtime";
+                $params['endtime'] = $endtime;
+            }
             
-            // Now filter assignments based on timeframe
+            $sql .= " ORDER BY a.duedate ASC";
+            
+            debugging('Executing SQL query: ' . $sql, DEBUG_DEVELOPER);
+            debugging('Query params: ' . print_r($params, true), DEBUG_DEVELOPER);
+            
+            $assignments = $DB->get_records_sql($sql, $params);
+            debugging('Found assignments: ' . print_r($assignments, true), DEBUG_DEVELOPER);
+            
             $result = [];
-            foreach ($allAssignments as $assignment) {
-                // Skip assignments without due dates
-                if (empty($assignment->duedate)) {
-                    continue;
-                }
-                
-                // Skip assignments that are already due
-                if ($assignment->duedate <= $now) {
-                    continue;
-                }
-                
-                // For timeframes other than 'all', check end time
-                if ($timeframe !== 'all' && $assignment->duedate > $endtime) {
-                    continue;
-                }
-                
+            foreach ($assignments as $assignment) {
                 // Calculate days and hours until due
                 $daysUntilDue = ceil(($assignment->duedate - $now) / DAYSECS);
                 $hoursUntilDue = ceil(($assignment->duedate - $now) / HOURSECS);
