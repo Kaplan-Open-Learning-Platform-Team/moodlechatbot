@@ -14,7 +14,7 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
     
         try {
             $userid = $params['userid'] ?? $USER->id;
-            $timeframe = $params['timeframe'] ?? 'all'; // Changed default to 'all'
+            $timeframe = $params['timeframe'] ?? 'all';
             debugging('Using user ID: ' . $userid . ' and timeframe: ' . $timeframe, DEBUG_DEVELOPER);
             
             // Calculate time range based on timeframe
@@ -23,15 +23,15 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
                 'week' => $now + WEEKSECS,
                 'month' => $now + (WEEKSECS * 4),
                 'year' => $now + (WEEKSECS * 52),
-                default => $now + (WEEKSECS * 52 * 2) // Default to 2 years ahead instead of unlimited
+                default => $now + (WEEKSECS * 52 * 2)
             };
             
             // Get user's courses
             debugging('Retrieving enrolled courses', DEBUG_DEVELOPER);
             $courses = enrol_get_users_courses($userid, true);
-            $courseids = array_keys($courses);
+            debugging('Found courses: ' . print_r($courses, true), DEBUG_DEVELOPER);
             
-            if (empty($courseids)) {
+            if (empty($courses)) {
                 debugging('No enrolled courses found', DEBUG_DEVELOPER);
                 return [
                     'success' => true,
@@ -44,29 +44,44 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
                 ];
             }
             
-            // Build query conditions
-            $params = ['modulename' => 'assign', 'userid' => $userid];
-            $timecondition = 'AND duedate > :now';
-            if ($timeframe !== 'all') {
-                $timecondition .= ' AND duedate <= :endtime';
-                $params['endtime'] = $endtime;
+            // Get the module ID for assignments
+            $assignmodule = $DB->get_record('modules', ['name' => 'assign']);
+            if (!$assignmodule) {
+                debugging('Assignment module not found', DEBUG_DEVELOPER);
+                throw new \moodle_exception('Assignment module not found');
             }
-            $params['now'] = $now;
+            debugging('Found assign module: ' . print_r($assignmodule, true), DEBUG_DEVELOPER);
             
-            // Get assignments
+            $courseids = array_keys($courses);
+            debugging('Course IDs: ' . implode(',', $courseids), DEBUG_DEVELOPER);
+            
+            // Build query conditions
+            $params = [
+                'moduleid' => $assignmodule->id,
+                'now' => $now
+            ];
+            
+            // Simplified SQL query
             $sql = "SELECT cm.id, cm.instance, a.name, a.duedate, c.fullname as coursename
                    FROM {course_modules} cm
                    JOIN {assign} a ON a.id = cm.instance
                    JOIN {course} c ON c.id = cm.course
-                   JOIN {modules} m ON m.id = cm.module
-                   WHERE m.name = :modulename 
+                   WHERE cm.module = :moduleid 
                    AND cm.course IN (" . implode(',', $courseids) . ")
-                   " . $timecondition . "
-                   ORDER BY a.duedate ASC";
+                   AND a.duedate > :now";
             
-            debugging('Executing SQL query for assignments: ' . $sql, DEBUG_DEVELOPER);
+            if ($timeframe !== 'all') {
+                $sql .= " AND a.duedate <= :endtime";
+                $params['endtime'] = $endtime;
+            }
+            
+            $sql .= " ORDER BY a.duedate ASC";
+            
+            debugging('Executing SQL query: ' . $sql, DEBUG_DEVELOPER);
             debugging('Query params: ' . print_r($params, true), DEBUG_DEVELOPER);
+            
             $assignments = $DB->get_records_sql($sql, $params);
+            debugging('Found assignments: ' . print_r($assignments, true), DEBUG_DEVELOPER);
             
             $result = [];
             foreach ($assignments as $assignment) {
