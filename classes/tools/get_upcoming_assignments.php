@@ -14,7 +14,7 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
     
         try {
             $userid = $params['userid'] ?? $USER->id;
-            $timeframe = $params['timeframe'] ?? 'month'; // Options: week, month, all
+            $timeframe = $params['timeframe'] ?? 'all'; // Changed default to 'all'
             debugging('Using user ID: ' . $userid . ' and timeframe: ' . $timeframe, DEBUG_DEVELOPER);
             
             // Calculate time range based on timeframe
@@ -22,7 +22,8 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
             $endtime = match($timeframe) {
                 'week' => $now + WEEKSECS,
                 'month' => $now + (WEEKSECS * 4),
-                default => 0 // 0 means no end time limit
+                'year' => $now + (WEEKSECS * 52),
+                default => $now + (WEEKSECS * 52 * 2) // Default to 2 years ahead instead of unlimited
             };
             
             // Get user's courses
@@ -30,10 +31,24 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
             $courses = enrol_get_users_courses($userid, true);
             $courseids = array_keys($courses);
             
+            if (empty($courseids)) {
+                debugging('No enrolled courses found', DEBUG_DEVELOPER);
+                return [
+                    'success' => true,
+                    'message' => 'No enrolled courses found',
+                    'current_time' => [
+                        'timestamp' => $now,
+                        'formatted' => userdate($now)
+                    ],
+                    'assignments' => []
+                ];
+            }
+            
             // Build query conditions
             $params = ['modulename' => 'assign', 'userid' => $userid];
-            $timecondition = $endtime > 0 ? 'AND duedate > :now AND duedate <= :endtime' : 'AND duedate > :now';
-            if ($endtime > 0) {
+            $timecondition = 'AND duedate > :now';
+            if ($timeframe !== 'all') {
+                $timecondition .= ' AND duedate <= :endtime';
                 $params['endtime'] = $endtime;
             }
             $params['now'] = $now;
@@ -49,7 +64,8 @@ class get_upcoming_assignments extends \mod_moodlechatbot\tool {
                    " . $timecondition . "
                    ORDER BY a.duedate ASC";
             
-            debugging('Executing SQL query for assignments', DEBUG_DEVELOPER);
+            debugging('Executing SQL query for assignments: ' . $sql, DEBUG_DEVELOPER);
+            debugging('Query params: ' . print_r($params, true), DEBUG_DEVELOPER);
             $assignments = $DB->get_records_sql($sql, $params);
             
             $result = [];
