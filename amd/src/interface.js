@@ -1,4 +1,3 @@
-
 // interface.js
 define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
     const init = () => {
