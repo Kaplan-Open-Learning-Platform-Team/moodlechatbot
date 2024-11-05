@@ -160,13 +160,25 @@ class chatbot_handler {
     }
 
     private function getSystemPrompt() {
+        $tools = [
+            [
+                'name' => 'get_enrolled_courses',
+                'description' => 'Retrieves the courses the current user is enrolled in',
+                'parameters' => []
+            ],
+            [
+                'name' => 'get_upcoming_assignments',
+                'description' => 'Retrieves all future assignments with their due dates and days until due',
+                'parameters' => [],
+                'note' => 'The tool returns all assignments - you should filter and process the results based on the user\'s query'
+            ]
+        ];
+
         return "You are a helpful assistant for a Moodle learning management system. " .
-               "You have access to the following tools: " .
-               "1. get_enrolled_courses: Retrieves the courses the current user is enrolled in. " .
-               "2. get_upcoming_assignments: Retrieves all future assignments with their due dates and days until due. " .
-               "The tool returns all assignments - you should filter and process the results based on the user's query. " .
+               "You have access to the following tools:\n\n" .
+               json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
                "If a user's query requires using a tool, respond with ONLY a JSON object containing " .
-               "a 'tool_call' key with 'name' and 'parameters' subkeys (empty parameters object for get_upcoming_assignments). " .
+               "a 'tool_call' key with 'name' and 'parameters' subkeys. " .
                "After receiving tool results, provide a natural language response to the user's query, filtering and processing " .
                "the assignments based on the user's requirements (e.g., next month, this week, etc.).";
     }
