@@ -164,7 +164,8 @@ class chatbot_handler {
             [
                 'name' => 'get_enrolled_courses',
                 'description' => 'Retrieves the courses the current user is enrolled in',
-                'parameters' => []
+                'parameters' => [],
+                'note' => 'format the output according to the query. For example if the query contains the word list the the output should be formatted as a list i.e. each item below the other. '
             ],
             [
                 'name' => 'get_upcoming_assignments',
