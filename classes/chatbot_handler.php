@@ -170,18 +170,27 @@ class chatbot_handler {
                 'name' => 'get_upcoming_assignments',
                 'description' => 'Retrieves all future assignments with their due dates and days until due',
                 'parameters' => [],
-                'note' => 'The tool returns all assignments - you should filter and process the results based on the user\'s query'
+                'note' => 'The tool returns all assignments - you should filter and process the results based on the user\'s query, such as specifying timeframes (e.g., next week, next month).'
             ]
         ];
-
+    
         return "You are a helpful assistant for a Moodle learning management system. " .
+               "You will answer queries politely, accurately, and concisely even if the query is not Moodle related. " .  // Fix concatenation error
                "You have access to the following tools:\n\n" .
                json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
                "If a user's query requires using a tool, respond with ONLY a JSON object containing " .
                "a 'tool_call' key with 'name' and 'parameters' subkeys. " .
+               "Here is an example of the expected JSON format:\n\n" .
+               "{\n" .
+               "  \"tool_call\": {\n" .
+               "    \"name\": \"tool_name\",\n" .
+               "    \"parameters\": {}\n" .
+               "  }\n" .
+               "}\n\n" .
                "After receiving tool results, provide a natural language response to the user's query, filtering and processing " .
                "the assignments based on the user's requirements (e.g., next month, this week, etc.).";
     }
+    
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
