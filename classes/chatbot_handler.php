@@ -9,11 +9,19 @@ class chatbot_handler {
     private $groq_api_key;
     private $groq_api_url = 'https://api.groq.com/openai/v1/chat/completions';
     private $tool_manager;
+    private $max_memory_size = 10;
 
     public function __construct() {
+        global $SESSION;
         $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
         $this->tool_manager = new tool_manager();
         $this->register_tools();
+        
+        // Initialize session memory if it doesn't exist
+        if (!isset($SESSION->chatbot_memory)) {
+            $SESSION->chatbot_memory = [];
+        }
+        
         debugging('Chatbot handler initialized', DEBUG_DEVELOPER);
     }
 
@@ -23,9 +31,42 @@ class chatbot_handler {
         debugging('Tools registered', DEBUG_DEVELOPER);
     }
 
+    private function addToMemory($role, $content) {
+        global $SESSION;
+        
+        // Add new message
+        $SESSION->chatbot_memory[] = [
+            'role' => $role,
+            'content' => $content,
+            'timestamp' => time()
+        ];
+
+        // Keep memory within size limit
+        while (count($SESSION->chatbot_memory) > $this->max_memory_size) {
+            array_shift($SESSION->chatbot_memory);
+        }
+
+        debugging('Memory state after adding message - Memory size: ' . count($SESSION->chatbot_memory), DEBUG_DEVELOPER);
+        debugging('Latest memory entry - Role: ' . $role . ', Content: ' . $content, DEBUG_DEVELOPER);
+        debugging('Full memory state: ' . print_r($SESSION->chatbot_memory, true), DEBUG_DEVELOPER);
+    }
+
+    public function clearMemory() {
+        global $SESSION;
+        $SESSION->chatbot_memory = [];
+        debugging('Conversation memory cleared', DEBUG_DEVELOPER);
+    }
+
     public function handleQuery($message) {
+        global $SESSION;
+        
         debugging('Debugging: Query received: ' . $message, DEBUG_DEVELOPER);
-        debugging('Debugging: Sending message to Groq: ' . $message, DEBUG_DEVELOPER);
+        debugging('Current memory state before processing: ' . print_r($SESSION->chatbot_memory, true), DEBUG_DEVELOPER);
+        
+        // Add user message to memory
+        $this->addToMemory('user', $message);
+        
+        debugging('Debugging: Sending message to Groq with conversation history', DEBUG_DEVELOPER);
         
         $initial_response = $this->sendToGroq($message);
         
@@ -84,6 +125,12 @@ class chatbot_handler {
             $formatted_response = $this->formatResponse($initial_response);
         }
 
+        // Add assistant's response to memory
+        $this->addToMemory('assistant', $formatted_response);
+        
+        // Log final memory state
+        debugging('Final memory state after processing: ' . print_r($SESSION->chatbot_memory, true), DEBUG_DEVELOPER);
+
         debugging('Debugging: Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
         return $formatted_response;
     }
@@ -111,14 +158,33 @@ class chatbot_handler {
     }
 
     private function sendToGroq($message) {
+        global $SESSION;
         $curl = curl_init();
+    
+        // Prepare messages array with conversation history
+        $messages = [
+            ['role' => 'system', 'content' => $this->getSystemPrompt()]
+        ];
+
+        // Add conversation history from session
+        foreach ($SESSION->chatbot_memory as $exchange) {
+            $messages[] = [
+                'role' => $exchange['role'],
+                'content' => $exchange['content']
+            ];
+        }
+
+        // Add current message if it's not already part of a conversation
+        if (!is_array($message)) {
+            $messages[] = ['role' => 'user', 'content' => $message];
+        }
+
+        // Log the messages being sent to Groq
+        debugging('Messages being sent to Groq: ' . print_r($messages, true), DEBUG_DEVELOPER);
     
         $payload = json_encode([
             'model' => 'llama-3.2-90b-text-preview',
-            'messages' => [
-                ['role' => 'system', 'content' => $this->getSystemPrompt()],
-                ['role' => 'user', 'content' => $message]
-            ]
+            'messages' => $messages
         ]);
     
         curl_setopt_array($curl, [
@@ -176,7 +242,7 @@ class chatbot_handler {
         ];
     
         return "You are a helpful assistant for a Moodle learning management system. " .
-               "You will answer queries politely, accurately, and concisely even if the query is not Moodle related. " .  // Fix concatenation error
+               "You will answer queries politely, accurately, and concisely even if the query is not Moodle related. " .
                "You have access to the following tools:\n\n" .
                json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
                "If a user's query requires using a tool, respond with ONLY a JSON object containing " .
@@ -189,9 +255,11 @@ class chatbot_handler {
                "  }\n" .
                "}\n\n" .
                "After receiving tool results, provide a natural language response to the user's query, filtering and processing " .
-               "the assignments based on the user's requirements (e.g., next month, this week, etc.).";
+               "the assignments based on the user's requirements (e.g., next month, this week, etc.). " .
+               "Use the conversation history to maintain context and provide more relevant responses. " .
+               "When a user refers to previous messages (e.g., 'tell me another', 'repeat that'), look at the conversation " .
+               "history to understand the context and provide an appropriate response.";
     }
-    
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
