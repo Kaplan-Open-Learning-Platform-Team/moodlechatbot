@@ -31,15 +31,14 @@ class chatbot_handler {
         debugging('Tools registered', DEBUG_DEVELOPER);
     }
 
-    private function addToMemory($role, $content, $is_tool_result = false) {
+    private function addToMemory($role, $content) {
         global $SESSION;
         
-        // Add new message with metadata
+        // Add new message
         $SESSION->chatbot_memory[] = [
             'role' => $role,
             'content' => $content,
-            'timestamp' => time(),
-            'is_tool_result' => $is_tool_result
+            'timestamp' => time()
         ];
 
         // Keep memory within size limit
@@ -67,16 +66,7 @@ class chatbot_handler {
         // Add user message to memory
         $this->addToMemory('user', $message);
         
-        // First, try to get a response using existing memory context
-        $memory_response = $this->getResponseFromMemory($message);
-        if ($memory_response !== false) {
-            debugging('Found relevant response in memory', DEBUG_DEVELOPER);
-            $this->addToMemory('assistant', $memory_response);
-            return $memory_response;
-        }
-        
-        debugging('Debugging: No relevant response found in memory, sending message to Groq', DEBUG_DEVELOPER);
-        
+        // Send message to Groq with full conversation history
         $initial_response = $this->sendToGroq($message);
         
         if ($initial_response === false) {
@@ -100,7 +90,7 @@ class chatbot_handler {
 
         $content = $decoded_response['choices'][0]['message']['content'];
         
-        // Only try to extract tool call from new LLM responses
+        // Try to extract tool call from the response
         $tool_call = $this->extractToolCall($content);
         
         if ($tool_call) {
@@ -112,8 +102,8 @@ class chatbot_handler {
                 $tool_result = $tool->execute($tool_call['parameters']);
                 debugging('Debugging: Tool Output: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
                 
-                // Store tool result in memory
-                $this->addToMemory('system', $tool_result, true);
+                // Add tool result to memory
+                $this->addToMemory('system', $tool_result);
                 
                 // Prepare data to send back to Groq
                 $data_for_groq = json_encode([
@@ -147,40 +137,6 @@ class chatbot_handler {
         return $formatted_response;
     }
 
-    private function getResponseFromMemory($message) {
-        global $SESSION;
-        
-        // Simple similarity check for questions about assignments
-        $assignment_keywords = ['assignment', 'homework', 'due', 'deadline'];
-        $is_assignment_query = false;
-        foreach ($assignment_keywords as $keyword) {
-            if (stripos($message, $keyword) !== false) {
-                $is_assignment_query = true;
-                break;
-            }
-        }
-        
-        if ($is_assignment_query) {
-            // Look for recent tool results about assignments
-            foreach (array_reverse($SESSION->chatbot_memory) as $entry) {
-                if (isset($entry['is_tool_result']) && $entry['is_tool_result']) {
-                    // Found a relevant tool result, get the next assistant response
-                    $found_tool_result = false;
-                    foreach ($SESSION->chatbot_memory as $response) {
-                        if ($found_tool_result && $response['role'] === 'assistant') {
-                            return $response['content'];
-                        }
-                        if ($response === $entry) {
-                            $found_tool_result = true;
-                        }
-                    }
-                }
-            }
-        }
-        
-        return false;
-    }
-
     private function extractToolCall($content) {
         debugging('Debugging: Attempting to extract tool call from: ' . $content, DEBUG_DEVELOPER);
         
@@ -212,12 +168,8 @@ class chatbot_handler {
             ['role' => 'system', 'content' => $this->getSystemPrompt()]
         ];
 
-        // Add conversation history from session
+        // Add all conversation history from session
         foreach ($SESSION->chatbot_memory as $exchange) {
-            // Skip tool results in the conversation history sent to Groq
-            if (isset($exchange['is_tool_result']) && $exchange['is_tool_result']) {
-                continue;
-            }
             $messages[] = [
                 'role' => $exchange['role'],
                 'content' => $exchange['content']
@@ -295,8 +247,8 @@ class chatbot_handler {
                "You will answer queries politely, accurately, and concisely even if the query is not Moodle related. " .
                "You have access to the following tools:\n\n" .
                json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
-               "If a user's query requires using a tool, respond with ONLY a JSON object containing " .
-               "a 'tool_call' key with 'name' and 'parameters' subkeys. " .
+               "If a user's query requires using a tool AND the information is not available in the conversation history, " .
+               "respond with ONLY a JSON object containing a 'tool_call' key with 'name' and 'parameters' subkeys. " .
                "Here is an example of the expected JSON format:\n\n" .
                "{\n" .
                "  \"tool_call\": {\n" .
@@ -307,8 +259,9 @@ class chatbot_handler {
                "After receiving tool results, provide a natural language response to the user's query, filtering and processing " .
                "the assignments based on the user's requirements (e.g., next month, this week, etc.). " .
                "Use the conversation history to maintain context and provide more relevant responses. " .
-               "When a user refers to previous messages (e.g., 'tell me another', 'repeat that'), look at the conversation " .
-               "history to understand the context and provide an appropriate response.";
+               "When a user refers to previous messages (e.g., 'tell me another', 'repeat that'), or asks for information " .
+               "that was already provided in the conversation history, use that history to provide an appropriate response " .
+               "instead of making unnecessary tool calls.";
     }
 
     private function formatResponse($response) {
