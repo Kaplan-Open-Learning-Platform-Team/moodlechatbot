@@ -57,6 +57,30 @@ class chatbot_handler {
         debugging('Conversation memory cleared', DEBUG_DEVELOPER);
     }
 
+    private function cleanMemoryForLLM($memory) {
+        $cleaned = [];
+        foreach ($memory as $entry) {
+            // Skip entries that are tool calls or system messages
+            if ($entry['role'] === 'system' || 
+                (isset($entry['content']) && strpos($entry['content'], '"tool_call"') !== false)) {
+                continue;
+            }
+            
+            // Clean up any waiting messages
+            if (strpos($entry['content'], 'please wait') !== false ||
+                strpos($entry['content'], 'waiting for') !== false ||
+                strpos($entry['content'], 'made a request') !== false) {
+                continue;
+            }
+            
+            $cleaned[] = [
+                'role' => $entry['role'],
+                'content' => $entry['content']
+            ];
+        }
+        return $cleaned;
+    }
+
     public function handleQuery($message) {
         global $SESSION;
         
@@ -168,12 +192,10 @@ class chatbot_handler {
             ['role' => 'system', 'content' => $this->getSystemPrompt()]
         ];
 
-        // Add all conversation history from session
-        foreach ($SESSION->chatbot_memory as $exchange) {
-            $messages[] = [
-                'role' => $exchange['role'],
-                'content' => $exchange['content']
-            ];
+        // Clean and add conversation history
+        $cleaned_memory = $this->cleanMemoryForLLM($SESSION->chatbot_memory);
+        foreach ($cleaned_memory as $exchange) {
+            $messages[] = $exchange;
         }
 
         // Add current message if it's not already part of a conversation
@@ -215,7 +237,7 @@ class chatbot_handler {
         }
     
         if ($info['http_code'] != 200) {
-            debugging('HTTP Error: ' . $info['http_code'] . ' - Response: ' . $response, DEBUG_DEVELOPER);
+            debugging('HTTP Error: ' . $info['http_code] . ' - Response: ' . $response, DEBUG_DEVELOPER);
             return false;
         }
     
@@ -244,7 +266,12 @@ class chatbot_handler {
         ];
     
         return "You are a helpful assistant for a Moodle learning management system. " .
-               "You will answer queries politely, accurately, and concisely even if the query is not Moodle related. " .
+               "You will answer queries politely, accurately, and concisely even if the query is not Moodle related.\n\n" .
+               "IMPORTANT: Before making any tool calls, carefully check the conversation history. " .
+               "If the information needed to answer the query exists in the conversation history, use that information " .
+               "instead of making a new tool call. Only make a tool call if the information is not available or might be outdated.\n\n" .
+               "For example, if a user asks 'what is my next assignment?' and the conversation history shows you recently told them " .
+               "'Your next assignment is X due in Y days', you should use that existing information rather than making a new tool call.\n\n" .
                "You have access to the following tools:\n\n" .
                json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
                "If a user's query requires using a tool AND the information is not available in the conversation history, " .
@@ -257,11 +284,9 @@ class chatbot_handler {
                "  }\n" .
                "}\n\n" .
                "After receiving tool results, provide a natural language response to the user's query, filtering and processing " .
-               "the assignments based on the user's requirements (e.g., next month, this week, etc.). " .
-               "Use the conversation history to maintain context and provide more relevant responses. " .
-               "When a user refers to previous messages (e.g., 'tell me another', 'repeat that'), or asks for information " .
-               "that was already provided in the conversation history, use that history to provide an appropriate response " .
-               "instead of making unnecessary tool calls.";
+               "the assignments based on the user's requirements (e.g., next month, this week, etc.).\n\n" .
+               "REMEMBER: Always check the conversation history first and use existing information when available. " .
+               "Only make tool calls when you need new or updated information.";
     }
 
     private function formatResponse($response) {
