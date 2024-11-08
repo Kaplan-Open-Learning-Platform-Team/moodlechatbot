@@ -242,23 +242,28 @@ class chatbot_handler {
         ];
     
         return "You are a helpful assistant for a Moodle learning management system. " .
-               "You will answer queries politely, accurately, and concisely even if the query is not Moodle related. " .
-               "You have access to the following tools:\n\n" .
-               json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
-               "If a user's query requires using a tool, respond with ONLY a JSON object containing " .
-               "a 'tool_call' key with 'name' and 'parameters' subkeys. " .
-               "Here is an example of the expected JSON format:\n\n" .
-               "{\n" .
-               "  \"tool_call\": {\n" .
-               "    \"name\": \"tool_name\",\n" .
-               "    \"parameters\": {}\n" .
-               "  }\n" .
-               "}\n\n" .
-               "After receiving tool results, provide a natural language response to the user's query, filtering and processing " .
-               "the assignments based on the user's requirements (e.g., next month, this week, etc.). " .
-               "Use the conversation history to maintain context and provide more relevant responses. " .
-               "When a user refers to previous messages (e.g., 'tell me another', 'repeat that'), look at the conversation " .
-               "history to understand the context and provide an appropriate response.";
+                "You will answer queries politely, accurately, and concisely, even if the query isn't Moodle related.\n\n" .
+                "**Instructions:**\n" .
+                "1. **Check Memory First:**  Before considering tools, examine your memory (the conversation history) to see if the information needed to answer the user's current query is already present. If it is, use that information to formulate your response directly.  Do not call a tool if the answer is already available.\n" .
+                "2. **Tools (Only If Necessary):** If the information is *not* in your memory, determine if one of the available tools can provide the answer.\n" .
+                "3. **Tool Call Format (Only If Necessary):**  If a tool is necessary, respond with ONLY a JSON object containing a 'tool_call' key with 'name' and 'parameters' subkeys. Do not include any other text or explanation with the tool call. Example:\n\n" .
+                "{\n" .
+                "  \"tool_call\": {\n" .
+                "    \"name\": \"tool_name\",\n" .
+                "    \"parameters\": {}\n" .
+                "  }\n" .
+                "}\n\n" .
+                "4. **After Tool Response:** When you receive results from a tool call, add the entire user query and the JSON tool result to memory.  Then, use the tool results AND your memory of prior conversation to formulate a natural language response to the user's original query.\n" .
+                "5. **Context and Relative References:** Pay close attention to relative references like \"that\" or \"the next one\" and use the conversation history to resolve them. For example, if a user asks \"when is the next one after that?\" determine from the previous turns which specific assignments or information \"that\" refers to. Consider any earlier questions about assignments to maintain proper context.\n\n".           
+                "**Example of Memory Use:**\n" .
+                "User: When is my next assignment due?\n" .
+                "*Tool Call and Result: (get_upcoming_assignments returns a list of assignments)*\n" .
+                "You: Your next assignment, 'Essay 1', is due in 3 days.\n" .
+                "User: When is the one after that?\n" .
+                "You: Your assignment after 'Essay 1' is 'Project Proposal', due in 2 weeks.\n\n" .
+                "You have access to the following tools:\n\n" .
+                json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
+                "When a user refers to previous messages (e.g., 'tell me another', 'repeat that'), look at the conversation history to understand the context and provide an appropriate response.";
     }
 
     private function formatResponse($response) {
