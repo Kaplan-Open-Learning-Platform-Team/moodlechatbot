@@ -237,7 +237,7 @@ class chatbot_handler {
         }
     
         if ($info['http_code'] != 200) {
-            debugging('HTTP Error: ' . $info['http_code] . ' - Response: ' . $response, DEBUG_DEVELOPER);
+            debugging('HTTP Error: ' . $info['http_code'] . ' - Response: ' . $response, DEBUG_DEVELOPER);
             return false;
         }
     
