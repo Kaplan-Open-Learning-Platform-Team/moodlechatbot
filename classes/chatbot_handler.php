@@ -31,14 +31,15 @@ class chatbot_handler {
         debugging('Tools registered', DEBUG_DEVELOPER);
     }
 
-    private function addToMemory($role, $content) {
+    private function addToMemory($role, $content, $is_tool_result = false) {
         global $SESSION;
         
-        // Add new message
+        // Add new message with metadata
         $SESSION->chatbot_memory[] = [
             'role' => $role,
             'content' => $content,
-            'timestamp' => time()
+            'timestamp' => time(),
+            'is_tool_result' => $is_tool_result
         ];
 
         // Keep memory within size limit
@@ -66,7 +67,15 @@ class chatbot_handler {
         // Add user message to memory
         $this->addToMemory('user', $message);
         
-        debugging('Debugging: Sending message to Groq with conversation history', DEBUG_DEVELOPER);
+        // First, try to get a response using existing memory context
+        $memory_response = $this->getResponseFromMemory($message);
+        if ($memory_response !== false) {
+            debugging('Found relevant response in memory', DEBUG_DEVELOPER);
+            $this->addToMemory('assistant', $memory_response);
+            return $memory_response;
+        }
+        
+        debugging('Debugging: No relevant response found in memory, sending message to Groq', DEBUG_DEVELOPER);
         
         $initial_response = $this->sendToGroq($message);
         
@@ -91,7 +100,7 @@ class chatbot_handler {
 
         $content = $decoded_response['choices'][0]['message']['content'];
         
-        // Try to extract tool call from the content
+        // Only try to extract tool call from new LLM responses
         $tool_call = $this->extractToolCall($content);
         
         if ($tool_call) {
@@ -102,6 +111,9 @@ class chatbot_handler {
                 debugging('Debugging: Calling tool method: ' . $tool_call['name'] . '->execute(' . json_encode($tool_call['parameters']) . ')', DEBUG_DEVELOPER);
                 $tool_result = $tool->execute($tool_call['parameters']);
                 debugging('Debugging: Tool Output: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
+                
+                // Store tool result in memory
+                $this->addToMemory('system', $tool_result, true);
                 
                 // Prepare data to send back to Groq
                 $data_for_groq = json_encode([
@@ -133,6 +145,40 @@ class chatbot_handler {
 
         debugging('Debugging: Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
         return $formatted_response;
+    }
+
+    private function getResponseFromMemory($message) {
+        global $SESSION;
+        
+        // Simple similarity check for questions about assignments
+        $assignment_keywords = ['assignment', 'homework', 'due', 'deadline'];
+        $is_assignment_query = false;
+        foreach ($assignment_keywords as $keyword) {
+            if (stripos($message, $keyword) !== false) {
+                $is_assignment_query = true;
+                break;
+            }
+        }
+        
+        if ($is_assignment_query) {
+            // Look for recent tool results about assignments
+            foreach (array_reverse($SESSION->chatbot_memory) as $entry) {
+                if (isset($entry['is_tool_result']) && $entry['is_tool_result']) {
+                    // Found a relevant tool result, get the next assistant response
+                    $found_tool_result = false;
+                    foreach ($SESSION->chatbot_memory as $response) {
+                        if ($found_tool_result && $response['role'] === 'assistant') {
+                            return $response['content'];
+                        }
+                        if ($response === $entry) {
+                            $found_tool_result = true;
+                        }
+                    }
+                }
+            }
+        }
+        
+        return false;
     }
 
     private function extractToolCall($content) {
@@ -168,6 +214,10 @@ class chatbot_handler {
 
         // Add conversation history from session
         foreach ($SESSION->chatbot_memory as $exchange) {
+            // Skip tool results in the conversation history sent to Groq
+            if (isset($exchange['is_tool_result']) && $exchange['is_tool_result']) {
+                continue;
+            }
             $messages[] = [
                 'role' => $exchange['role'],
                 'content' => $exchange['content']
@@ -242,28 +292,23 @@ class chatbot_handler {
         ];
     
         return "You are a helpful assistant for a Moodle learning management system. " .
-                "You will answer queries politely, accurately, and concisely, even if the query isn't Moodle related.\n\n" .
-                "**Instructions:**\n" .
-                "1. **Check Memory First:**  Before considering tools, examine your memory (the conversation history) to see if the information needed to answer the user's current query is already present. If it is, use that information to formulate your response directly.  Do not call a tool if the answer is already available.\n" .
-                "2. **Tools (Only If Necessary):** If the information is *not* in your memory, determine if one of the available tools can provide the answer.\n" .
-                "3. **Tool Call Format (Only If Necessary):**  If a tool is necessary, respond with ONLY a JSON object containing a 'tool_call' key with 'name' and 'parameters' subkeys. Do not include any other text or explanation with the tool call. Example:\n\n" .
-                "{\n" .
-                "  \"tool_call\": {\n" .
-                "    \"name\": \"tool_name\",\n" .
-                "    \"parameters\": {}\n" .
-                "  }\n" .
-                "}\n\n" .
-                "4. **After Tool Response:** When you receive results from a tool call, add the entire user query and the JSON tool result to memory.  Then, use the tool results AND your memory of prior conversation to formulate a natural language response to the user's original query.\n" .
-                "5. **Context and Relative References:** Pay close attention to relative references like \"that\" or \"the next one\" and use the conversation history to resolve them. For example, if a user asks \"when is the next one after that?\" determine from the previous turns which specific assignments or information \"that\" refers to. Consider any earlier questions about assignments to maintain proper context.\n\n".           
-                "**Example of Memory Use:**\n" .
-                "User: When is my next assignment due?\n" .
-                "*Tool Call and Result: (get_upcoming_assignments returns a list of assignments)*\n" .
-                "You: Your next assignment, 'Essay 1', is due in 3 days.\n" .
-                "User: When is the one after that?\n" .
-                "You: Your assignment after 'Essay 1' is 'Project Proposal', due in 2 weeks.\n\n" .
-                "You have access to the following tools:\n\n" .
-                json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
-                "When a user refers to previous messages (e.g., 'tell me another', 'repeat that'), look at the conversation history to understand the context and provide an appropriate response.";
+               "You will answer queries politely, accurately, and concisely even if the query is not Moodle related. " .
+               "You have access to the following tools:\n\n" .
+               json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
+               "If a user's query requires using a tool, respond with ONLY a JSON object containing " .
+               "a 'tool_call' key with 'name' and 'parameters' subkeys. " .
+               "Here is an example of the expected JSON format:\n\n" .
+               "{\n" .
+               "  \"tool_call\": {\n" .
+               "    \"name\": \"tool_name\",\n" .
+               "    \"parameters\": {}\n" .
+               "  }\n" .
+               "}\n\n" .
+               "After receiving tool results, provide a natural language response to the user's query, filtering and processing " .
+               "the assignments based on the user's requirements (e.g., next month, this week, etc.). " .
+               "Use the conversation history to maintain context and provide more relevant responses. " .
+               "When a user refers to previous messages (e.g., 'tell me another', 'repeat that'), look at the conversation " .
+               "history to understand the context and provide an appropriate response.";
     }
 
     private function formatResponse($response) {
