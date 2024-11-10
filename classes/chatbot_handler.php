@@ -34,6 +34,31 @@ class chatbot_handler {
     private function addToMemory($role, $content) {
         global $SESSION;
         
+        // Convert array/object content to string if necessary
+        if (is_array($content) || is_object($content)) {
+            // If it's a tool result, format it as natural language
+            if ($role === 'system') {
+                if (isset($content['assignments'])) {
+                    // Format assignments data
+                    $formatted = "Here are the upcoming assignments:\n";
+                    foreach ($content['assignments'] as $assignment) {
+                        $formatted .= "- {$assignment['name']} is due on {$assignment['due_date']} ({$assignment['days_until_due']} days from now)\n";
+                    }
+                    $content = $formatted;
+                } else if (isset($content['courses'])) {
+                    // Format courses data
+                    $formatted = "You are enrolled in the following courses:\n";
+                    foreach ($content['courses'] as $course) {
+                        $formatted .= "- {$course['name']}\n";
+                    }
+                    $content = $formatted;
+                } else {
+                    // Generic array/object conversion
+                    $content = json_encode($content, JSON_PRETTY_PRINT);
+                }
+            }
+        }
+        
         // Add new message
         $SESSION->chatbot_memory[] = [
             'role' => $role,
