@@ -34,32 +34,7 @@ class chatbot_handler {
     private function addToMemory($role, $content) {
         global $SESSION;
         
-        // Convert array/object content to string if necessary
-        if (is_array($content) || is_object($content)) {
-            // If it's a tool result, format it as natural language
-            if ($role === 'system') {
-                if (isset($content['assignments'])) {
-                    // Format assignments data
-                    $formatted = "Here are the upcoming assignments:\n";
-                    foreach ($content['assignments'] as $assignment) {
-                        $formatted .= "- {$assignment['name']} is due on {$assignment['due_date']} ({$assignment['days_until_due']} days from now)\n";
-                    }
-                    $content = $formatted;
-                } else if (isset($content['courses'])) {
-                    // Format courses data
-                    $formatted = "You are enrolled in the following courses:\n";
-                    foreach ($content['courses'] as $course) {
-                        $formatted .= "- {$course['name']}\n";
-                    }
-                    $content = $formatted;
-                } else {
-                    // Generic array/object conversion
-                    $content = json_encode($content, JSON_PRETTY_PRINT);
-                }
-            }
-        }
-        
-        // Add new message
+        // Add new message, preserving array/object structure for tool results
         $SESSION->chatbot_memory[] = [
             'role' => $role,
             'content' => $content,
@@ -72,7 +47,7 @@ class chatbot_handler {
         }
 
         debugging('Memory state after adding message - Memory size: ' . count($SESSION->chatbot_memory), DEBUG_DEVELOPER);
-        debugging('Latest memory entry - Role: ' . $role . ', Content: ' . $content, DEBUG_DEVELOPER);
+        debugging('Latest memory entry - Role: ' . $role . ', Content: ' . print_r($content, true), DEBUG_DEVELOPER);
         debugging('Full memory state: ' . print_r($SESSION->chatbot_memory, true), DEBUG_DEVELOPER);
     }
 
@@ -85,16 +60,16 @@ class chatbot_handler {
     private function cleanMemoryForLLM($memory) {
         $cleaned = [];
         foreach ($memory as $entry) {
-            // Skip entries that are tool calls or system messages
-            if ($entry['role'] === 'system' || 
-                (isset($entry['content']) && strpos($entry['content'], '"tool_call"') !== false)) {
+            // Skip entries that are tool calls
+            if (isset($entry['content']) && strpos(json_encode($entry['content']), '"tool_call"') !== false) {
                 continue;
             }
             
             // Clean up any waiting messages
-            if (strpos($entry['content'], 'please wait') !== false ||
+            if (is_string($entry['content']) && (
+                strpos($entry['content'], 'please wait') !== false ||
                 strpos($entry['content'], 'waiting for') !== false ||
-                strpos($entry['content'], 'made a request') !== false) {
+                strpos($entry['content'], 'made a request') !== false)) {
                 continue;
             }
             
@@ -151,17 +126,15 @@ class chatbot_handler {
                 $tool_result = $tool->execute($tool_call['parameters']);
                 debugging('Debugging: Tool Output: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
                 
-                // Add tool result to memory
+                // Add tool result to memory, preserving array/object structure
                 $this->addToMemory('system', $tool_result);
                 
-                // Prepare data to send back to Groq
-                $data_for_groq = json_encode([
+                // Send the tool result back to Groq for final response formatting
+                $final_response = $this->sendToGroq([
                     'user_message' => $message,
                     'tool_result' => $tool_result
                 ]);
                 
-                // Send the tool result back to Groq for final response formatting
-                $final_response = $this->sendToGroq($data_for_groq);
                 if ($final_response === false) {
                     debugging('Error: Failed to get a final response from Groq API', DEBUG_DEVELOPER);
                     return "I'm sorry, but I encountered an error while processing the tool results.";
@@ -292,11 +265,18 @@ class chatbot_handler {
     
         return "You are a helpful assistant for a Moodle learning management system. " .
                "You will answer queries politely, accurately, and concisely even if the query is not Moodle related.\n\n" .
-               "IMPORTANT: Before making any tool calls, carefully check the conversation history. " .
-               "If the information needed to answer the query exists in the conversation history, use that information " .
-               "instead of making a new tool call. Only make a tool call if the information is not available or might be outdated.\n\n" .
-               "For example, if a user asks 'what is my next assignment?' and the conversation history shows you recently told them " .
-               "'Your next assignment is X due in Y days', you should use that existing information rather than making a new tool call.\n\n" .
+               "IMPORTANT: Before making any tool calls, carefully check the conversation history for relevant information including tool results. " .
+               "Tool results appear in the history as 'system' messages containing structured data. For example, " .
+               "get_upcoming_assignments results contain an 'assignments' array with each assignment's name, due date, and days until due.\n\n" .
+               "When a user asks follow-up questions about assignments (like 'what's due after that?'), " .
+               "you should analyze the assignments array from the most recent tool result to find the answer. " .
+               "Sort assignments by due date if needed. Only make a new tool call if the data is not available or might be outdated.\n\n" .
+               "Example conversation:\n" .
+               "User: What's my next assignment?\n" .
+               "[Tool returns assignments array]\n" .
+               "Assistant: Assignment X is due in 5 days\n" .
+               "User: What's due after that?\n" .
+               "[Should use existing assignments array to find the next one, NOT make a new tool call]\n\n" .
                "You have access to the following tools:\n\n" .
                json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
                "If a user's query requires using a tool AND the information is not available in the conversation history, " .
