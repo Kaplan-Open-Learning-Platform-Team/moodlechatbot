@@ -65,22 +65,27 @@ class chatbot_handler {
     private function cleanMemoryForLLM($memory) {
         $cleaned = [];
         foreach ($memory as $entry) {
+            // Convert content to string if it's an array/object
+            $content = $entry['content'];
+            if (is_array($content) || is_object($content)) {
+                $content = json_encode($content);
+            }
+            
             // Skip entries that are tool calls
-            if (isset($entry['content']) && strpos($entry['content'], '"tool_call"') !== false) {
+            if (strpos($content, '"tool_call"') !== false) {
                 continue;
             }
             
             // Clean up any waiting messages
-            if (is_string($entry['content']) && (
-                strpos($entry['content'], 'please wait') !== false ||
-                strpos($entry['content'], 'waiting for') !== false ||
-                strpos($entry['content'], 'made a request') !== false)) {
+            if (strpos($content, 'please wait') !== false ||
+                strpos($content, 'waiting for') !== false ||
+                strpos($content, 'made a request') !== false) {
                 continue;
             }
             
             $cleaned[] = [
                 'role' => $entry['role'],
-                'content' => $entry['content']
+                'content' => $content
             ];
         }
         return $cleaned;
