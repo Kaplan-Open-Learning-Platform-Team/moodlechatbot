@@ -34,7 +34,12 @@ class chatbot_handler {
     private function addToMemory($role, $content) {
         global $SESSION;
         
-        // Add new message, preserving array/object structure for tool results
+        // Convert array/object content to JSON string for system messages (tool results)
+        if ($role === 'system' && (is_array($content) || is_object($content))) {
+            $content = json_encode($content, JSON_PRETTY_PRINT);
+        }
+        
+        // Add new message
         $SESSION->chatbot_memory[] = [
             'role' => $role,
             'content' => $content,
@@ -61,7 +66,7 @@ class chatbot_handler {
         $cleaned = [];
         foreach ($memory as $entry) {
             // Skip entries that are tool calls
-            if (isset($entry['content']) && strpos(json_encode($entry['content']), '"tool_call"') !== false) {
+            if (isset($entry['content']) && strpos($entry['content'], '"tool_call"') !== false) {
                 continue;
             }
             
@@ -126,7 +131,7 @@ class chatbot_handler {
                 $tool_result = $tool->execute($tool_call['parameters']);
                 debugging('Debugging: Tool Output: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
                 
-                // Add tool result to memory, preserving array/object structure
+                // Add tool result to memory as JSON string
                 $this->addToMemory('system', $tool_result);
                 
                 // Send the tool result back to Groq for final response formatting
