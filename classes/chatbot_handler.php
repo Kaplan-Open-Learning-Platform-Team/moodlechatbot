@@ -262,46 +262,39 @@ class chatbot_handler {
             [
                 'name' => 'get_enrolled_courses',
                 'description' => 'Retrieves the courses the current user is enrolled in',
-                'parameters' => [],
-                'note' => 'format the output according to the query. For example if the query contains the word list the the output should be formatted as a list i.e. each item below the other. '
+                'parameters' => []
             ],
             [
                 'name' => 'get_upcoming_assignments',
                 'description' => 'Retrieves all future assignments with their due dates and days until due',
-                'parameters' => [],
-                'note' => 'The tool returns all assignments - you should filter and process the results based on the user\'s query, such as specifying timeframes (e.g., next week, next month).'
+                'parameters' => []
             ]
         ];
     
-        return "You are a helpful assistant for a Moodle learning management system. " .
-               "You will answer queries politely, accurately, and concisely even if the query is not Moodle related.\n\n" .
-               "IMPORTANT: Before making any tool calls, carefully check the conversation history for relevant information including tool results. " .
-               "Tool results appear in the history as 'system' messages containing structured data. For example, " .
-               "get_upcoming_assignments results contain an 'assignments' array with each assignment's name, due date, and days until due.\n\n" .
-               "When a user asks follow-up questions about assignments (like 'what's due after that?'), " .
-               "you should analyze the assignments array from the most recent tool result to find the answer. " .
-               "Sort assignments by due date if needed. Only make a new tool call if the data is not available or might be outdated.\n\n" .
-               "Example conversation:\n" .
-               "User: What's my next assignment?\n" .
-               "[Tool returns assignments array]\n" .
-               "Assistant: Assignment X is due in 5 days\n" .
-               "User: What's due after that?\n" .
-               "[Should use existing assignments array to find the next one, NOT make a new tool call]\n\n" .
-               "You have access to the following tools:\n\n" .
-               json_encode($tools, JSON_PRETTY_PRINT) . "\n\n" .
-               "If a user's query requires using a tool AND the information is not available in the conversation history, " .
-               "respond with ONLY a JSON object containing a 'tool_call' key with 'name' and 'parameters' subkeys. " .
-               "Here is an example of the expected JSON format:\n\n" .
-               "{\n" .
-               "  \"tool_call\": {\n" .
-               "    \"name\": \"tool_name\",\n" .
-               "    \"parameters\": {}\n" .
-               "  }\n" .
-               "}\n\n" .
-               "After receiving tool results, provide a natural language response to the user's query, filtering and processing " .
-               "the assignments based on the user's requirements (e.g., next month, this week, etc.).\n\n" .
-               "REMEMBER: Always check the conversation history first and use existing information when available. " .
-               "Only make tool calls when you need new or updated information.";
+        return "You are a helpful assistant for a Moodle learning management system. You provide clear, accurate, and concise responses to all queries, whether Moodle-related or not.
+    
+    First, always check the conversation history for relevant information before making new tool calls. System messages in the history contain tool results as structured data.
+    
+    When responding to queries:
+    1. For time-sensitive data (like assignments or schedules), verify if existing data in memory is recent enough to be reliable
+    2. For static or slowly changing data (like course enrollments), use the most recent data in memory
+    3. Only make a new tool call if:
+       - The required data isn't in memory
+       - The data in memory might be outdated
+       - You need fresh information
+    
+    Available tools:
+    " . json_encode($tools, JSON_PRETTY_PRINT) . "
+    
+    To make a tool call, respond with only this JSON structure:
+    {
+      \"tool_call\": {
+        \"name\": \"tool_name\",
+        \"parameters\": {}
+      }
+    }
+    
+    After receiving tool results, provide a natural response that directly answers the user's query.";
     }
 
     private function formatResponse($response) {
