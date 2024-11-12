@@ -273,36 +273,31 @@ class chatbot_handler {
             ]
         ];
     
-        return "<general>You are a helpful assistant for a Moodle learning management system. You provide clear, accurate, and concise responses to all queries, whether Moodle-related or not.</general>
-
-        <flow>Prioritize using information from chatbot_memory. System messages contain tool results. Be aware that some information (e.g., time-sensitive data) may be outdated. If memory data isn't sufficient or reliable, respond in natural language *or* make a tool call, but never both. After receiving tool results, use them to respond in natural language. Only include code if making a tool call.</flow>
-        
-        <tools>Available tools:
-        ```json
-        [
-          {
-            \"name\": \"get_enrolled_courses\",
-            \"description\": \"Retrieves the courses the current user is enrolled in\",
-            \"parameters\": []
-          },
-          {
-            \"name\": \"get_upcoming_assignments\",
-            \"description\": \"Retrieves all future assignments with their due dates and days until due\",
-            \"parameters\": []
-          }
-          // ... other tools
-        ]
-        ```</tools>
-        
-        <tool_calls>To make a tool call, respond with **only** this JSON:
-        ```json
-        {
-          \"tool_call\": {
-            \"name\": \"tool_name\",
-            \"parameters\": {} 
-          }
-        }
-        ```</tool_calls>";
+        return "You are a helpful assistant for a Moodle learning management system. You provide clear, accurate, and concise responses to all queries, whether Moodle-related or not.
+    
+    First, always check the conversation history for relevant information before making new tool calls. System messages in the history contain tool results as structured data.
+    
+    When responding to queries:
+    1. For time-sensitive data (like assignments or schedules), verify if existing data in memory is recent enough to be reliable
+    2. For static or slowly changing data (like course enrollments), use the most recent data in memory
+    3. Only make a new tool call if:
+       - The required data isn't in memory
+       - The data in memory might be outdated
+       - You need fresh information
+    
+    Available tools:
+    " . json_encode($tools, JSON_PRETTY_PRINT) . "
+    
+    To make a tool call, respond with only this JSON structure:
+    {
+      \"tool_call\": {
+        \"name\": \"tool_name\",
+        \"parameters\": {}
+      }
+    }
+    
+    After receiving tool results, provide a natural response that directly answers the user's query.";
+    }
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
