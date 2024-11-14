@@ -283,15 +283,15 @@ class chatbot_handler {
         1. First, check the conversation memory to see if you can provide a response using the information already available. Be mindful that some data in the memory, such as time-sensitive information or rapidly changing course details, may become outdated or unreliable over time.
         Examples of unreliable memory data:
 
-        Assignment due dates that have passed
-        Course enrollments or schedules that have changed
-        Rapidly evolving current events or news
+            1. Assignment due dates that have passed
+            2. Course enrollments or schedules that have changed
+            3. Rapidly evolving current events or news
 
 
-        If the memory data is missing, unreliable, or insufficient to fully answer the user's query, you have two options:
-        a. Respond in natural language using your own knowledge and reasoning.
-        b. Make a tool call to retrieve additional information.
-        After either responding in natural language or making a tool call, provide a final response that directly answers the user's original query. Your response should be clear, helpful, and tailored to the user's needs.
+        2. If the memory data is missing, unreliable, or insufficient to fully answer the user's query, you have two options:
+            a. Respond in natural language using your own knowledge and reasoning, providing a clear and concise answer.
+            b. Make a tool call to retrieve additional information, then incorporate the results into a direct, helpful response.
+        3. Your final response should directly address the user's original query in a clear, concise manner. Avoid unnecessary details or verbosity. The user's needs should be the primary focus of your response.
 
         At no point should you combine a natural language response with a tool call in the same reply. The flow should be either memory-based response, tool call response, or natural language response - never a mixture.
         </flow>
