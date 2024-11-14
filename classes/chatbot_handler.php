@@ -136,20 +136,26 @@ class chatbot_handler {
                 $tool_result = $tool->execute($tool_call['parameters']);
                 debugging('Debugging: Tool Output: ' . print_r($tool_result, true), DEBUG_DEVELOPER);
                 
-                // Add tool result to memory as JSON string
+                // Add tool result to memory as system message
                 $this->addToMemory('system', $tool_result);
                 
-                // Send the tool result back to Groq for final response formatting
-                $final_response = $this->sendToGroq([
-                    'user_message' => $message,
-                    'tool_result' => $tool_result
-                ]);
+                // Send a new message to Groq with the tool result
+                $tool_result_message = "Here is the result of the " . $tool_call['name'] . " tool:\n" . json_encode($tool_result, JSON_PRETTY_PRINT) . "\n\nPlease provide a natural language response based on this data.";
+                
+                $final_response = $this->sendToGroq($tool_result_message);
                 
                 if ($final_response === false) {
                     debugging('Error: Failed to get a final response from Groq API', DEBUG_DEVELOPER);
                     return "I'm sorry, but I encountered an error while processing the tool results.";
                 }
+                
                 $formatted_response = $this->formatResponse($final_response);
+                
+                // Add the formatted response to memory
+                $this->addToMemory('assistant', $formatted_response);
+                
+                return $formatted_response;
+                
             } catch (\Exception $e) {
                 debugging('Error during tool execution: ' . $e->getMessage(), DEBUG_DEVELOPER);
                 return "I'm sorry, but I encountered an error while processing your request with the specified tool.";
@@ -157,16 +163,12 @@ class chatbot_handler {
         } else {
             debugging('Debugging: No tool call detected or extracted.', DEBUG_DEVELOPER);
             $formatted_response = $this->formatResponse($initial_response);
+            
+            // Add the response to memory
+            $this->addToMemory('assistant', $formatted_response);
+            
+            return $formatted_response;
         }
-
-        // Add assistant's response to memory
-        $this->addToMemory('assistant', $formatted_response);
-        
-        // Log final memory state
-        debugging('Final memory state after processing: ' . print_r($SESSION->chatbot_memory, true), DEBUG_DEVELOPER);
-
-        debugging('Debugging: Sending response to user: ' . $formatted_response, DEBUG_DEVELOPER);
-        return $formatted_response;
     }
 
     private function extractToolCall($content) {
