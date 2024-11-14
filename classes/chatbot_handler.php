@@ -222,7 +222,6 @@ class chatbot_handler {
         ]);
     
         curl_setopt_array($curl, [
-            CURLOPT_URL => $this->groq_api_url,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => '',
             CURLOPT_MAXREDIRS => 10,
