@@ -6,14 +6,19 @@ namespace mod_moodlechatbot;
 defined('MOODLE_INTERNAL') || die();
 
 class chatbot_handler {
+    private $api_provider;
     private $groq_api_key;
+    private $gemini_api_key;
     private $groq_api_url = 'https://api.groq.com/openai/v1/chat/completions';
+    private $gemini_api_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
     private $tool_manager;
     private $max_memory_size = 10;
 
     public function __construct() {
         global $SESSION;
+        $this->api_provider = get_config('mod_moodlechatbot', 'api_provider');
         $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
+        $this->gemini_api_key = get_config('mod_moodlechatbot', 'gemini_api_key');
         $this->tool_manager = new tool_manager();
         $this->register_tools();
         
@@ -100,30 +105,31 @@ class chatbot_handler {
         // Add user message to memory
         $this->addToMemory('user', $message);
         
-        // Send message to Groq with full conversation history
-        $initial_response = $this->sendToGroq($message);
+        // Send message to selected API with full conversation history
+        $initial_response = $this->api_provider === 'gemini' ? 
+            $this->sendToGemini($message) : 
+            $this->sendToGroq($message);
         
         if ($initial_response === false) {
-            debugging('Error: Failed to get a response from Groq API', DEBUG_DEVELOPER);
+            debugging('Error: Failed to get a response from ' . $this->api_provider . ' API', DEBUG_DEVELOPER);
             return "I'm sorry, but I encountered an error while communicating with the AI service.";
         }
         
-        debugging('Debugging: Raw response from Groq: ' . $initial_response, DEBUG_DEVELOPER);
+        debugging('Debugging: Raw response from ' . $this->api_provider . ': ' . $initial_response, DEBUG_DEVELOPER);
 
         $decoded_response = json_decode($initial_response, true);
         if (json_last_error() !== JSON_ERROR_NONE) {
             debugging('Error decoding JSON response: ' . json_last_error_msg(), DEBUG_DEVELOPER);
             return "I'm sorry, but I encountered an error while processing the AI service response.";
         }
-        debugging('Debugging: Decoded Groq response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
+        debugging('Debugging: Decoded ' . $this->api_provider . ' response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
         
-        if (!isset($decoded_response['choices'][0]['message']['content'])) {
-            debugging('Unexpected response structure from Groq API', DEBUG_DEVELOPER);
+        $content = $this->extractContent($decoded_response);
+        if ($content === false) {
+            debugging('Unexpected response structure from ' . $this->api_provider . ' API', DEBUG_DEVELOPER);
             return "I'm sorry, but I couldn't process your request at this time due to an unexpected response format.";
         }
 
-        $content = $decoded_response['choices'][0]['message']['content'];
-        
         // Try to extract tool call from the response
         $tool_call = $this->extractToolCall($content);
         
@@ -139,13 +145,15 @@ class chatbot_handler {
                 // Add tool result to memory as system message
                 $this->addToMemory('system', $tool_result);
                 
-                // Send a new message to Groq with the tool result
+                // Send a new message to API with the tool result
                 $tool_result_message = "Here is the result of the " . $tool_call['name'] . " tool:\n" . json_encode($tool_result, JSON_PRETTY_PRINT) . "\n\nPlease provide a natural language response based on this data.";
                 
-                $final_response = $this->sendToGroq($tool_result_message);
+                $final_response = $this->api_provider === 'gemini' ? 
+                    $this->sendToGemini($tool_result_message) : 
+                    $this->sendToGroq($tool_result_message);
                 
                 if ($final_response === false) {
-                    debugging('Error: Failed to get a final response from Groq API', DEBUG_DEVELOPER);
+                    debugging('Error: Failed to get a final response from ' . $this->api_provider . ' API', DEBUG_DEVELOPER);
                     return "I'm sorry, but I encountered an error while processing the tool results.";
                 }
                 
@@ -194,6 +202,11 @@ class chatbot_handler {
     }
 
     private function sendToGroq($message) {
+        if (empty($this->groq_api_key)) {
+            debugging('Error: No Groq API key configured', DEBUG_DEVELOPER);
+            return false;
+        }
+
         global $SESSION;
         $curl = curl_init();
     
@@ -261,6 +274,92 @@ class chatbot_handler {
         return $response;
     }
 
+    private function sendToGemini($message) {
+        if (empty($this->gemini_api_key)) {
+            debugging('Error: No Gemini API key configured', DEBUG_DEVELOPER);
+            return false;
+        }
+
+        global $SESSION;
+        $curl = curl_init();
+
+        // Prepare conversation history
+        $cleaned_memory = $this->cleanMemoryForLLM($SESSION->chatbot_memory);
+        $conversation = "";
+        foreach ($cleaned_memory as $exchange) {
+            $conversation .= ($exchange['role'] === 'user' ? 'User: ' : 'Assistant: ') . $exchange['content'] . "\n";
+        }
+
+        // Add system prompt and current message
+        $full_prompt = $this->getSystemPrompt() . "\n\nConversation History:\n" . $conversation . 
+            "User: " . $message . "\nAssistant:";
+
+        $payload = json_encode([
+            'contents' => [
+                [
+                    'parts' => [
+                        ['text' => $full_prompt]
+                    ]
+                ]
+            ],
+            'generationConfig' => [
+                'temperature' => 0.7,
+                'maxOutputTokens' => 1000,
+            ]
+        ]);
+
+        $url = $this->gemini_api_url . '?key=' . $this->gemini_api_key;
+
+        curl_setopt_array($curl, [
+            CURLOPT_URL => $url,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => '',
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => 'POST',
+            CURLOPT_POSTFIELDS => $payload,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json'
+            ],
+        ]);
+
+        $response = curl_exec($curl);
+        $err = curl_error($curl);
+        $info = curl_getinfo($curl);
+        curl_close($curl);
+
+        if ($err) {
+            debugging('cURL Error: ' . $err, DEBUG_DEVELOPER);
+            return false;
+        }
+
+        if ($info['http_code'] != 200) {
+            debugging('HTTP Error: ' . $info['http_code'] . ' - Response: ' . $response, DEBUG_DEVELOPER);
+            return false;
+        }
+
+        if (empty($response)) {
+            debugging('Error: Empty response from Gemini API', DEBUG_DEVELOPER);
+            return false;
+        }
+
+        return $response;
+    }
+
+    private function extractContent($decoded_response) {
+        if ($this->api_provider === 'gemini') {
+            if (isset($decoded_response['candidates'][0]['content']['parts'][0]['text'])) {
+                return $decoded_response['candidates'][0]['content']['parts'][0]['text'];
+            }
+        } else { // Groq
+            if (isset($decoded_response['choices'][0]['message']['content'])) {
+                return $decoded_response['choices'][0]['message']['content'];
+            }
+        }
+        return false;
+    }
+
     private function getSystemPrompt() {
         $tools = [
             [
@@ -320,10 +419,24 @@ class chatbot_handler {
 
     private function formatResponse($response) {
         $decoded = json_decode($response, true);
-        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['choices'][0]['message']['content'])) {
-            $formatted = $decoded['choices'][0]['message']['content'];
+        if (json_last_error() === JSON_ERROR_NONE) {
+            if ($this->api_provider === 'gemini') {
+                if (isset($decoded['candidates'][0]['content']['parts'][0]['text'])) {
+                    $formatted = $decoded['candidates'][0]['content']['parts'][0]['text'];
+                } else {
+                    debugging('Error accessing Gemini response content', DEBUG_DEVELOPER);
+                    $formatted = "I'm sorry, but I couldn't generate a response at this time.";
+                }
+            } else { // Groq
+                if (isset($decoded['choices'][0]['message']['content'])) {
+                    $formatted = $decoded['choices'][0]['message']['content'];
+                } else {
+                    debugging('Error accessing Groq response content', DEBUG_DEVELOPER);
+                    $formatted = "I'm sorry, but I couldn't generate a response at this time.";
+                }
+            }
         } else {
-            debugging('Error decoding or accessing response content: ' . json_last_error_msg(), DEBUG_DEVELOPER);
+            debugging('Error decoding response: ' . json_last_error_msg(), DEBUG_DEVELOPER);
             $formatted = "I'm sorry, but I couldn't generate a response at this time.";
         }
         return $formatted;

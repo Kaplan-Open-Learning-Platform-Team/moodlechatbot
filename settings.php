@@ -26,10 +26,32 @@
 defined('MOODLE_INTERNAL') || die();
 
 if ($ADMIN->fulltree) {
+    // API Provider Selection
+    $settings->add(new admin_setting_configselect(
+        'mod_moodlechatbot/api_provider',
+        get_string('api_provider', 'mod_moodlechatbot'),
+        get_string('api_provider_desc', 'mod_moodlechatbot'),
+        'groq',  // default value
+        array(
+            'groq' => 'Groq',
+            'gemini' => 'Google Gemini'
+        )
+    ));
+
+    // Groq API Key
     $settings->add(new admin_setting_configtext(
         'mod_moodlechatbot/groq_api_key',
         get_string('groq_api_key', 'mod_moodlechatbot'),
         get_string('groq_api_key_desc', 'mod_moodlechatbot'),
+        '',  // default value
+        PARAM_TEXT
+    ));
+
+    // Gemini API Key
+    $settings->add(new admin_setting_configtext(
+        'mod_moodlechatbot/gemini_api_key',
+        get_string('gemini_api_key', 'mod_moodlechatbot'),
+        get_string('gemini_api_key_desc', 'mod_moodlechatbot'),
         '',  // default value
         PARAM_TEXT
     ));

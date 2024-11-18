@@ -1,4 +1,3 @@
-
 <?php
 //lang/en/moodlechatbot.php
 
@@ -41,6 +40,13 @@ $string['groqapikey'] = 'Groq API Key'; // For the API key setting
 $string['groqapikeydesc'] = 'Enter your Groq API key here. This key is required for the chatbot to function.'; // Description for the API key setting
 $string['pluginnamesettings'] = 'Moodle Chatbot Settings'; // Add this back as it was being used in settings.php
 
+// API Selection and Keys
+$string['api_provider'] = 'AI Provider';
+$string['api_provider_desc'] = 'Select which AI provider to use for the chatbot';
+$string['groq_api_key'] = 'Groq API Key';
+$string['groq_api_key_desc'] = 'Enter your Groq API key here. You can obtain this from your Groq account.';
+$string['gemini_api_key'] = 'Google Gemini API Key';
+$string['gemini_api_key_desc'] = 'Enter your Google Gemini API key here. You can obtain this from Google Cloud Console.';
 
 // Strings for web service descriptions:  (Highly recommended)
 $string['getcoursesservice'] = 'Get enrolled courses';
@@ -48,7 +54,7 @@ $string['sendmessageservice'] = 'Send a message to the chatbot.';
 $string['moodlechatbot:addinstance'] = 'Add a new Moodle Chatbot activity';
 $string['moodlechatbot:use'] = 'Use Moodle Chatbot';
 $string['moodlechatbot:view'] = 'View Moodle Chatbot';
-$string['groq_api_key'] = 'Groq API Key';
-$string['groq_api_key_desc'] = 'Enter your Groq API key here. You can obtain this from your Groq account.';
 $string['error_executing_chatbot'] = 'An error occurred while processing your request: {$a}';
 $string['groq_api_error'] = 'Error communicating with Groq API: {$a}';
+$string['gemini_api_error'] = 'Error communicating with Gemini API: {$a}';
+$string['no_api_key'] = 'No API key configured for the selected provider';
