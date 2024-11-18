@@ -9,8 +9,10 @@ class chatbot_handler {
     private $api_provider;
     private $groq_api_key;
     private $gemini_api_key;
+    private $groq_model;
+    private $gemini_model;
     private $groq_api_url = 'https://api.groq.com/openai/v1/chat/completions';
-    private $gemini_api_url = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent';
+    private $gemini_api_base_url = 'https://generativelanguage.googleapis.com/v1beta/models/';
     private $tool_manager;
     private $max_memory_size = 10;
 
@@ -19,6 +21,8 @@ class chatbot_handler {
         $this->api_provider = get_config('mod_moodlechatbot', 'api_provider');
         $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
         $this->gemini_api_key = get_config('mod_moodlechatbot', 'gemini_api_key');
+        $this->groq_model = get_config('mod_moodlechatbot', 'groq_model') ?: 'llama-3.2-90b-text-preview';
+        $this->gemini_model = get_config('mod_moodlechatbot', 'gemini_model') ?: 'gemini-pro';
         $this->tool_manager = new tool_manager();
         $this->register_tools();
         
@@ -230,7 +234,7 @@ class chatbot_handler {
         debugging('Messages being sent to Groq: ' . print_r($messages, true), DEBUG_DEVELOPER);
     
         $payload = json_encode([
-            'model' => 'llama-3.2-90b-text-preview',
+            'model' => $this->groq_model,
             'messages' => $messages,
             'temperature' => 0.7,
             'max_tokens' => 1000
@@ -308,7 +312,7 @@ class chatbot_handler {
             ]
         ]);
 
-        $url = $this->gemini_api_url . '?key=' . $this->gemini_api_key;
+        $url = $this->gemini_api_base_url . $this->gemini_model . ':generateContent?key=' . $this->gemini_api_key;
 
         curl_setopt_array($curl, [
             CURLOPT_URL => $url,

@@ -47,6 +47,19 @@ if ($ADMIN->fulltree) {
         PARAM_TEXT
     ));
 
+    // Groq Model Selection
+    $settings->add(new admin_setting_configselect(
+        'mod_moodlechatbot/groq_model',
+        get_string('groq_model', 'mod_moodlechatbot'),
+        get_string('groq_model_desc', 'mod_moodlechatbot'),
+        'llama-3.2-90b-text-preview',  // default value
+        array(
+            'llama-3.2-90b-text-preview' => 'LLaMA 3.2 90B',
+            'mixtral-8x7b-32768' => 'Mixtral 8x7B-32768',
+            'gemma-7b-it' => 'Gemma 7B'
+        )
+    ));
+
     // Gemini API Key
     $settings->add(new admin_setting_configtext(
         'mod_moodlechatbot/gemini_api_key',
@@ -54,5 +67,17 @@ if ($ADMIN->fulltree) {
         get_string('gemini_api_key_desc', 'mod_moodlechatbot'),
         '',  // default value
         PARAM_TEXT
+    ));
+
+    // Gemini Model Selection
+    $settings->add(new admin_setting_configselect(
+        'mod_moodlechatbot/gemini_model',
+        get_string('gemini_model', 'mod_moodlechatbot'),
+        get_string('gemini_model_desc', 'mod_moodlechatbot'),
+        'gemini-pro',  // default value
+        array(
+            'gemini-pro' => 'Gemini Pro',
+            'gemini-pro-vision' => 'Gemini Pro Vision'
+        )
     ));
 }

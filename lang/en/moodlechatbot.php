@@ -48,6 +48,12 @@ $string['groq_api_key_desc'] = 'Enter your Groq API key here. You can obtain thi
 $string['gemini_api_key'] = 'Google Gemini API Key';
 $string['gemini_api_key_desc'] = 'Enter your Google Gemini API key here. You can obtain this from Google Cloud Console.';
 
+// Model Settings
+$string['groq_model'] = 'Groq Model';
+$string['groq_model_desc'] = 'Select which Groq model to use for the chatbot';
+$string['gemini_model'] = 'Gemini Model';
+$string['gemini_model_desc'] = 'Select which Gemini model to use for the chatbot';
+
 // Strings for web service descriptions:  (Highly recommended)
 $string['getcoursesservice'] = 'Get enrolled courses';
 $string['sendmessageservice'] = 'Send a message to the chatbot.';
