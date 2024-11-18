@@ -49,10 +49,10 @@ $string['gemini_api_key'] = 'Google Gemini API Key';
 $string['gemini_api_key_desc'] = 'Enter your Google Gemini API key here. You can obtain this from Google Cloud Console.';
 
 // Model Settings
-$string['groq_model'] = 'Groq Model';
-$string['groq_model_desc'] = 'Select which Groq model to use for the chatbot';
-$string['gemini_model'] = 'Gemini Model';
-$string['gemini_model_desc'] = 'Select which Gemini model to use for the chatbot';
+$string['groq_model'] = 'Groq Model Name';
+$string['groq_model_desc'] = 'Enter the name of the Groq model you want to use (e.g., llama-3.2-90b-text-preview, mixtral-8x7b-32768, gemma-7b-it)';
+$string['gemini_model'] = 'Gemini Model Name';
+$string['gemini_model_desc'] = 'Enter the name of the Gemini model you want to use (e.g., gemini-pro, gemini-pro-vision)';
 
 // Strings for web service descriptions:  (Highly recommended)
 $string['getcoursesservice'] = 'Get enrolled courses';

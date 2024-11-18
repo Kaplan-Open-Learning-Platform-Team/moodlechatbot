@@ -21,8 +21,20 @@ class chatbot_handler {
         $this->api_provider = get_config('mod_moodlechatbot', 'api_provider');
         $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
         $this->gemini_api_key = get_config('mod_moodlechatbot', 'gemini_api_key');
-        $this->groq_model = get_config('mod_moodlechatbot', 'groq_model') ?: 'llama-3.2-90b-text-preview';
-        $this->gemini_model = get_config('mod_moodlechatbot', 'gemini_model') ?: 'gemini-1.5-pro';
+        
+        // Get model names with defaults if not set
+        $this->groq_model = get_config('mod_moodlechatbot', 'groq_model');
+        if (empty($this->groq_model)) {
+            $this->groq_model = 'llama-3.2-90b-text-preview';
+            debugging('No Groq model specified, using default: ' . $this->groq_model, DEBUG_DEVELOPER);
+        }
+        
+        $this->gemini_model = get_config('mod_moodlechatbot', 'gemini_model');
+        if (empty($this->gemini_model)) {
+            $this->gemini_model = 'gemini-pro';
+            debugging('No Gemini model specified, using default: ' . $this->gemini_model, DEBUG_DEVELOPER);
+        }
+        
         $this->tool_manager = new tool_manager();
         $this->register_tools();
         
@@ -31,7 +43,8 @@ class chatbot_handler {
             $SESSION->chatbot_memory = [];
         }
         
-        debugging('Chatbot handler initialized', DEBUG_DEVELOPER);
+        debugging('Chatbot handler initialized with ' . $this->api_provider . ' using model: ' . 
+            ($this->api_provider === 'gemini' ? $this->gemini_model : $this->groq_model), DEBUG_DEVELOPER);
     }
 
     private function register_tools() {
@@ -62,7 +75,6 @@ class chatbot_handler {
 
         debugging('Memory state after adding message - Memory size: ' . count($SESSION->chatbot_memory), DEBUG_DEVELOPER);
         debugging('Latest memory entry - Role: ' . $role . ', Content: ' . print_r($content, true), DEBUG_DEVELOPER);
-        debugging('Full memory state: ' . print_r($SESSION->chatbot_memory, true), DEBUG_DEVELOPER);
     }
 
     public function clearMemory() {
@@ -104,7 +116,6 @@ class chatbot_handler {
         global $SESSION;
         
         debugging('Debugging: Query received: ' . $message, DEBUG_DEVELOPER);
-        debugging('Current memory state before processing: ' . print_r($SESSION->chatbot_memory, true), DEBUG_DEVELOPER);
         
         // Add user message to memory
         $this->addToMemory('user', $message);
@@ -126,7 +137,6 @@ class chatbot_handler {
             debugging('Error decoding JSON response: ' . json_last_error_msg(), DEBUG_DEVELOPER);
             return "I'm sorry, but I encountered an error while processing the AI service response.";
         }
-        debugging('Debugging: Decoded ' . $this->api_provider . ' response: ' . print_r($decoded_response, true), DEBUG_DEVELOPER);
         
         $content = $this->extractContent($decoded_response);
         if ($content === false) {
@@ -230,8 +240,7 @@ class chatbot_handler {
             $messages[] = ['role' => 'user', 'content' => $message];
         }
 
-        // Log the messages being sent to Groq
-        debugging('Messages being sent to Groq: ' . print_r($messages, true), DEBUG_DEVELOPER);
+        debugging('Using Groq model: ' . $this->groq_model, DEBUG_DEVELOPER);
     
         $payload = json_encode([
             'model' => $this->groq_model,
@@ -297,6 +306,8 @@ class chatbot_handler {
         // Add system prompt and current message
         $full_prompt = $this->getSystemPrompt() . "\n\nConversation History:\n" . $conversation . 
             "User: " . $message . "\nAssistant:";
+
+        debugging('Using Gemini model: ' . $this->gemini_model, DEBUG_DEVELOPER);
 
         $payload = json_encode([
             'contents' => [
