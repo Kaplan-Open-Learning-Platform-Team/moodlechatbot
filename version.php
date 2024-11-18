@@ -26,6 +26,6 @@ defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'mod_moodlechatbot';
 $plugin->release = '0.1.1';
-$plugin->version = 20243009003;
+$plugin->version = 20243009004;
 $plugin->requires = 2022112800;
 $plugin->maturity = MATURITY_ALPHA;
