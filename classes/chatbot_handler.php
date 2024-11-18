@@ -22,7 +22,7 @@ class chatbot_handler {
         $this->groq_api_key = get_config('mod_moodlechatbot', 'groq_api_key');
         $this->gemini_api_key = get_config('mod_moodlechatbot', 'gemini_api_key');
         $this->groq_model = get_config('mod_moodlechatbot', 'groq_model') ?: 'llama-3.2-90b-text-preview';
-        $this->gemini_model = get_config('mod_moodlechatbot', 'gemini_model') ?: 'gemini-pro';
+        $this->gemini_model = get_config('mod_moodlechatbot', 'gemini_model') ?: 'gemini-1.5-pro';
         $this->tool_manager = new tool_manager();
         $this->register_tools();
         
