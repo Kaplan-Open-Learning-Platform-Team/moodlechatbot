@@ -1,20 +1,49 @@
-define(['core/log'], function(log) {
-    return {
-        init: function() {
-            console.log('interface.js initialized');
-            // Event listener for Ctrl + Alt + Spacebar
-            document.addEventListener('keydown', function(event) {
-                console.log('keydown event triggered');
-                // Check for Ctrl + Alt + Spacebar key combination
-                if (event.ctrlKey && event.altKey && event.code === 'Space') {
-                    console.log('Ctrl + Alt + Spacebar key combination detected');
-                    // Prevent default spacebar behavior
-                    event.preventDefault();
+// interface.js
+define(['core/ajax', 'core/notification'], function(Ajax, Notification) {
+    const init = () => {
+        const sendButton = document.getElementById("moodlechatbot-send");
+        const textarea = document.getElementById("moodlechatbot-textarea");
+        const messagesContainer = document.getElementById("moodlechatbot-messages");
 
-                    // Display hello world alert
-                    alert('Hello World!');
-                }
-            });
-        }
+        const appendMessage = (role, content) => {
+            const messageElement = document.createElement("div");
+            messageElement.classList.add('message', role);
+            messageElement.textContent = content;
+            messagesContainer.appendChild(messageElement);
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        };
+
+        const sendMessage = () => {
+            const userInput = textarea.value.trim();
+
+            if (!userInput) {
+                return;
+            }
+
+            appendMessage("user", userInput);
+            textarea.value = "";
+
+            Ajax.call([{
+                methodname: 'mod_moodlechatbot_send_message',
+                args: { message: userInput },
+                done: function(response) {
+                    appendMessage("assistant", response.response);
+                },
+                fail: Notification.exception
+            }]);
+        };
+
+        sendButton.addEventListener("click", sendMessage);
+
+        textarea.addEventListener("keypress", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        });
+    };
+
+    return {
+        init: init
     };
 });
