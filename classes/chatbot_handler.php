@@ -89,26 +89,28 @@ class chatbot_handler {
             // Convert content to string if it's an array/object
             $content = $entry['content'];
             if (is_array($content) || is_object($content)) {
-                $content = json_encode($content);
+                $content = json_encode($content, JSON_PRETTY_PRINT);
             }
             
-            // Skip entries that are tool calls
-            if (strpos($content, '"tool_call"') !== false) {
+            // Skip empty or purely technical messages
+            if (empty(trim($content)) || $content === '{}' || $content === '[]') {
                 continue;
             }
             
-            // Clean up any waiting messages
-            if (strpos($content, 'please wait') !== false ||
-                strpos($content, 'waiting for') !== false ||
-                strpos($content, 'made a request') !== false) {
-                continue;
+            // Convert system messages with tool results to assistant messages for better context
+            if ($entry['role'] === 'system' && strpos($content, '{') === 0) {
+                $entry['role'] = 'assistant';
+                $content = "Here are the results I found: " . $content;
             }
             
+            // Keep all meaningful messages, including tool responses
             $cleaned[] = [
                 'role' => $entry['role'],
                 'content' => $content
             ];
         }
+        
+        debugging('Cleaned memory size: ' . count($cleaned), DEBUG_DEVELOPER);
         return $cleaned;
     }
 
