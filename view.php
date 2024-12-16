@@ -39,7 +39,5 @@ echo html_writer::tag('button', 'Send', array('id' => 'moodlechatbot-send'));
 echo html_writer::end_tag('div');
 echo html_writer::end_tag('div');
 
-// Include the JavaScript module
-$PAGE->requires->js_call_amd('mod_moodlechatbot/interface', 'init');
 
 echo $OUTPUT->footer();
